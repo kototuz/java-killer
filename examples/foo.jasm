@@ -1,0 +1,13 @@
+.method main "([Ljava/lang/String;)V" ["Ljava/lang/String" int int int]
+{
+    iconst_1
+    iconst_1
+    iadd
+    istore_2
+    return
+}
+
+.method foo "()V" []
+{
+    return
+}
