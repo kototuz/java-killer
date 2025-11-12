@@ -5,6 +5,9 @@
 
 #include "jvm_class.h"
 
+#define LOC_Fmt      "%d:%d"
+#define LOC_Arg(loc) (loc).line_number, (loc).line_offset+1
+
 typedef struct {
     JcLocalDef *items;
     uint16_t count;
@@ -17,37 +20,37 @@ const char *lexer_token_id_string(long token_id)
 {
     static char single_char_token_buf[2] = {0};
     switch (token_id) {
-    case CLEX_eof: return "CLEX_eof";
-    case CLEX_parse_error: return "CLEX_parse_error";
-    case CLEX_intlit: return "CLEX_intlit";
-    case CLEX_floatlit: return "CLEX_floatlit";
-    case CLEX_id: return "CLEX_id";
-    case CLEX_dqstring: return "CLEX_dqstring";
-    case CLEX_sqstring: return "CLEX_sqstring";
-    case CLEX_charlit: return "CLEX_charlit";
-    case CLEX_eq: return "CLEX_eq";
-    case CLEX_noteq: return "CLEX_noteq";
-    case CLEX_lesseq: return "CLEX_lesseq";
-    case CLEX_greatereq: return "CLEX_greatereq";
-    case CLEX_andand: return "CLEX_andand";
-    case CLEX_oror: return "CLEX_oror";
-    case CLEX_shl: return "CLEX_shl";
-    case CLEX_shr: return "CLEX_shr";
-    case CLEX_plusplus: return "CLEX_plusplus";
-    case CLEX_minusminus: return "CLEX_minusminus";
-    case CLEX_pluseq: return "CLEX_pluseq";
-    case CLEX_minuseq: return "CLEX_minuseq";
-    case CLEX_muleq: return "CLEX_muleq";
-    case CLEX_diveq: return "CLEX_diveq";
-    case CLEX_modeq: return "CLEX_modeq";
-    case CLEX_andeq: return "CLEX_andeq";
-    case CLEX_oreq: return "CLEX_oreq";
-    case CLEX_xoreq: return "CLEX_xoreq";
-    case CLEX_arrow: return "CLEX_arrow";
-    case CLEX_eqarrow: return "CLEX_eqarrow";
-    case CLEX_shleq: return "CLEX_shleq";
-    case CLEX_shreq: return "CLEX_shreq";
-    case CLEX_first_unused_token: return "CLEX_first_unused_token";
+    case CLEX_eof:                return "EOF";
+    case CLEX_parse_error:        return "Parse Error";
+    case CLEX_intlit:             return "integer";
+    case CLEX_floatlit:           return "float";
+    case CLEX_id:                 return "identifier";
+    case CLEX_dqstring:           return "string";
+    case CLEX_sqstring:           return "string";
+    case CLEX_charlit:            return "NOT USED";
+    case CLEX_eq:                 return "NOT USED";
+    case CLEX_noteq:              return "NOT USED";
+    case CLEX_lesseq:             return "NOT USED";
+    case CLEX_greatereq:          return "NOT USED";
+    case CLEX_andand:             return "NOT USED";
+    case CLEX_oror:               return "NOT USED";
+    case CLEX_shl:                return "NOT USED";
+    case CLEX_shr:                return "NOT USED";
+    case CLEX_plusplus:           return "NOT USED";
+    case CLEX_minusminus:         return "NOT USED";
+    case CLEX_pluseq:             return "NOT USED";
+    case CLEX_minuseq:            return "NOT USED";
+    case CLEX_muleq:              return "NOT USED";
+    case CLEX_diveq:              return "NOT USED";
+    case CLEX_modeq:              return "NOT USED";
+    case CLEX_andeq:              return "NOT USED";
+    case CLEX_oreq:               return "NOT USED";
+    case CLEX_xoreq:              return "NOT USED";
+    case CLEX_arrow:              return "NOT USED";
+    case CLEX_eqarrow:            return "NOT USED";
+    case CLEX_shleq:              return "NOT USED";
+    case CLEX_shreq:              return "NOT USED";
+    case CLEX_first_unused_token: return "NOT USED";
     default:
         single_char_token_buf[0] = token_id;
         return single_char_token_buf;
@@ -56,25 +59,19 @@ const char *lexer_token_id_string(long token_id)
 
 bool lexer_expect_token(stb_lexer *lexer, long token_id)
 {
-    if (!stb_c_lexer_get_token(lexer)) {
-        fprintf(stderr, "ERROR: Token '%s' was expected but found EOF\n", lexer_token_id_string(token_id));
-        return false;
-    }
-
+    stb_c_lexer_get_token(lexer);
     if (lexer->token != token_id) {
-        fprintf(stderr, "ERROR: Token '%s' was expected but found '%s'\n", lexer_token_id_string(token_id), lexer_token_id_string(lexer->token));
+        stb_lex_location loc;
+        stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+        fprintf(stderr,
+                "ERROR:"LOC_Fmt": Token '%s' was expected but found '%s'\n",
+                LOC_Arg(loc),
+                lexer_token_id_string(token_id),
+                lexer_token_id_string(lexer->token));
+
         return false;
     }
 
-    return true;
-}
-
-bool lexer_check_token_id(stb_lexer lexer, long token_id)
-{
-    if (lexer.token != token_id) {
-        fprintf(stderr, "ERROR: Token '%s' was expected but found '%s'\n", lexer_token_id_string(token_id), lexer_token_id_string(lexer.token));
-        return false;
-    }
     return true;
 }
 
@@ -97,6 +94,86 @@ String_View lexer_token_sv(stb_lexer lexer)
     default:
         UNREACHABLE("lexer_token_sv");
     }
+}
+
+bool parse_field_descriptors(stb_lexer *lexer, String_View descriptors, LocalDefs *result)
+{
+    stb_lex_location loc;
+    String_View class_name;
+    while (descriptors.count > 0) {
+        switch (descriptors.data[0]) {
+        case 'V': {
+            sv_chop_left(&descriptors, 1);
+        } break;
+
+        case 'I': {
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
+            sv_chop_left(&descriptors, 1);
+        } break;
+
+        case '[': {
+            class_name = sv_chop_by_delim(&descriptors, ';');
+            if (class_name.data[class_name.count] != ';') {
+                stb_c_lexer_get_location(lexer, &class_name.data[class_name.count], &loc);
+                fprintf(stderr, "ERROR:"LOC_Fmt": Object descriptor must end with ';'\n", LOC_Arg(loc));
+                return false;
+            }
+            
+            class_name.count += 1;
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
+        } break;
+
+        case 'L': {
+            class_name = sv_chop_by_delim(&descriptors, ';');
+            if (class_name.data[class_name.count] != ';') {
+                stb_c_lexer_get_location(lexer, &class_name.data[class_name.count], &loc);
+                fprintf(stderr, "ERROR:"LOC_Fmt": Object descriptor must end with ';'\n", LOC_Arg(loc));
+                return false;
+            }
+
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
+        } break;
+
+        default:
+            stb_c_lexer_get_location(lexer, descriptors.data, &loc);
+            fprintf(stderr, "ERROR:"LOC_Fmt": Unknown field descriptor\n", LOC_Arg(loc));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool lexer_expect_method_descriptor(stb_lexer *lexer, LocalDefs *result)
+{
+    stb_lex_location loc;
+
+    if (!lexer_expect_token(lexer, CLEX_dqstring)) return false;
+
+    String_View descriptor = lexer_token_sv(*lexer);
+    if (!sv_starts_with(descriptor, SV_STATIC("("))) {
+        stb_c_lexer_get_location(lexer, descriptor.data, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Method descriptor parameters must start with '('\n", LOC_Arg(loc));
+        return false;
+    }
+
+    String_View params = sv_chop_by_delim(&descriptor, ')');
+    sv_chop_left(&params, 1);
+    if (params.data[params.count] != ')') {
+        stb_c_lexer_get_location(lexer, params.data + params.count, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Method descriptor parameters must end with ')'\n", LOC_Arg(loc));
+        return false;
+    }
+
+    // Parse parameters
+    if (!parse_field_descriptors(lexer, params, result)) return false;
+    uint16_t param_count = result->count;
+
+    // Parse return value
+    if (!parse_field_descriptors(lexer, descriptor, result)) return false;
+    result->count = param_count; // We need just check that return value is in correct form
+
+    return true;
 }
 
 // Parses sequence of types e.g. 'IBLjava/lang/String;' -> [int, byte, class 'java/lang/String']
@@ -128,6 +205,13 @@ bool descriptor_to_local_defs(String_View descriptor, LocalDefs *local_defs)
     }
 
     return true;
+}
+
+void report_unexpected_token(stb_lexer lexer)
+{
+    stb_lex_location loc;
+    stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
+    fprintf(stderr, "ERROR:"LOC_Fmt": Unexpected token '%s'\n", LOC_Arg(loc), lexer_token_id_string(lexer.token));
 }
 
 bool opcode_from_name(const char *name, JcInstOpcode *result)
@@ -335,7 +419,6 @@ bool opcode_from_name(const char *name, JcInstOpcode *result)
     else if (strcmp(name, "goto_w") == 0)          *result = JC_INST_OPCODE_GOTO_W;
     else if (strcmp(name, "jsr_w") == 0)           *result = JC_INST_OPCODE_JSR_W;
     else {
-        fprintf(stderr, "ERROR: Unknown instruction '%s'\n", name);
         return false;
     }
 
@@ -367,55 +450,62 @@ int main(int argc, char **argv)
     {
         local_defs.count = 0;
 
-        if (!lexer_check_token_id(lexer, '.')) return 1;
+        if (lexer.token != '.') {
+            report_unexpected_token(lexer);
+            return 1;
+        }
+
         lexer_expect_keyword(&lexer, "method");
 
-        lexer_expect_token(&lexer, CLEX_id);
+        if (!lexer_expect_token(&lexer, CLEX_id)) return 1;
         String_View name = lexer_token_sv(lexer);
-        lexer_expect_token(&lexer, CLEX_dqstring);
+        if (!lexer_expect_method_descriptor(&lexer, &local_defs)) return 1;
         String_View descriptor = lexer_token_sv(lexer);
 
-        // Extract argument definitions from descriptor
-        String_View args = descriptor;
-        sv_chop_left(&args, 1);
-        args = sv_chop_by_delim(&args, ')');
-        if (!descriptor_to_local_defs(args, &local_defs)) return 1;
-
-        uint16_t arg_count = local_defs.count;
+        uint16_t param_count = local_defs.count;
 
         // Parse local variable definitions
-        lexer_expect_token(&lexer, '[');
+        if (!lexer_expect_token(&lexer, '[')) return 1;
         for (;;) {
-            if (!stb_c_lexer_get_token(&lexer)) {
-                fprintf(stderr, "ERROR: Unexpected EOF\n");
-                return 1;
-            }
-
-            if (lexer.token == ']') break;
-            if (lexer.token == CLEX_id && strcmp(lexer.string, "int") == 0) {
+            stb_c_lexer_get_token(&lexer);
+            if (lexer.token == ']') {
+                break;
+            } else if (lexer.token == CLEX_id && strcmp(lexer.string, "int") == 0) {
                 da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
             } else if (lexer.token == CLEX_dqstring) {
+                // TODO: Check format
                 da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = lexer_token_sv(lexer) }));
+            } else {
+                report_unexpected_token(lexer);
+                return 1;
             }
         }
 
-        JcMethod *method = jc_method_new(&jc, name, descriptor, local_defs.items, local_defs.count, arg_count);
+        JcMethod *method = jc_method_new(&jc, name, descriptor, local_defs.items, local_defs.count, param_count);
         method->max_stack = STACK_SIZE;
         method->access_flags = JC_ACCESS_FLAG_PUBLIC | JC_ACCESS_FLAG_STATIC;
 
         // Parse code
-        lexer_expect_token(&lexer, '{');
+        if (!lexer_expect_token(&lexer, '{')) return 1;
         for (;;) {
-            if (!stb_c_lexer_get_token(&lexer)) {
-                fprintf(stderr, "ERROR: Unexpected EOF while parsing code\n");
+            stb_c_lexer_get_token(&lexer);
+            if (lexer.token == '}') {
+                break;
+            } else if (lexer.token == CLEX_id) {
+                 // TODO: Operands
+                JcInstOpcode opcode;
+                if (opcode_from_name(lexer.string, &opcode)) {
+                    jc_method_push_inst(method, opcode);
+                } else {
+                    stb_lex_location loc;
+                    stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
+                    fprintf(stderr, "ERROR:"LOC_Fmt": Unknown opcode '%s'\n", LOC_Arg(loc), lexer.string);
+                    return 1;
+                }
+            } else {
+                report_unexpected_token(lexer);
                 return 1;
             }
-
-            if (lexer.token == '}') break;
-            lexer_check_token_id(lexer, CLEX_id); // TODO: Operands
-            JcInstOpcode opcode;
-            if (!opcode_from_name(lexer.string, &opcode)) return 1;
-            jc_method_push_inst(method, opcode);
         }
     }
 
@@ -424,3 +514,4 @@ int main(int argc, char **argv)
 }
 
 // TODO: At the moment 'jasm' supports only opcodes without operands
+// TODO: Ability to define stack size
