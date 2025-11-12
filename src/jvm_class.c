@@ -221,14 +221,14 @@ JcClass jc_new(const char *name)
     JcClass c = {0};
 
     // Push attribute names now to reuse it later
-    jc_cp_push_utf8(&c, "Code");
-    jc_cp_push_utf8(&c, "SourceFile");
-    jc_cp_push_utf8(&c, "StackMapTable");
+    jc_cp_push_utf8(&c, SV_STATIC("Code"));
+    jc_cp_push_utf8(&c, SV_STATIC("SourceFile"));
+    jc_cp_push_utf8(&c, SV_STATIC("StackMapTable"));
 
-    c.this_class = jc_cp_push_class(&c, name);
+    c.this_class = jc_cp_push_class(&c, sv_from_cstr(name));
 
     // Default parameters for convenience
-    c.super_class = jc_cp_push_class(&c, "java/lang/Object");
+    c.super_class = jc_cp_push_class(&c, SV_STATIC("java/lang/Object"));
     c.minor_version = 0;
     c.major_version = 64;
     c.access_flags = JC_ACCESS_FLAG_SUPER;
@@ -238,8 +238,8 @@ JcClass jc_new(const char *name)
 
 JcMethod *jc_method_new(
         JcClass *c,
-        const char *name,
-        const char *descriptor,
+        String_View name,
+        String_View descriptor,
         JcLocalDef *local_defs,
         uint16_t local_def_count,
         uint16_t arg_count)
@@ -380,9 +380,9 @@ void jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *opera
 uint16_t jc_cp_push_ref(
         JcClass *jc,
         JcConstantTag ref_kind,
-        const char *class_name,
-        const char *method_name,
-        const char *descriptor)
+        String_View class_name,
+        String_View method_name,
+        String_View descriptor)
 {
     JcConstant c = {
         .tag = ref_kind,
@@ -396,7 +396,7 @@ uint16_t jc_cp_push_ref(
     return jc->constant_pool.count;
 }
 
-uint16_t jc_cp_push_name_and_type(JcClass *jc, const char *name, const char *descriptor)
+uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View descriptor)
 {
     JcConstant c = {
         .tag = JC_CONSTANT_TAG_NAME_AND_TYPE,
@@ -410,7 +410,7 @@ uint16_t jc_cp_push_name_and_type(JcClass *jc, const char *name, const char *des
     return jc->constant_pool.count;
 }
 
-uint16_t jc_cp_push_class(JcClass *jc, const char *class_name)
+uint16_t jc_cp_push_class(JcClass *jc, String_View class_name)
 {
     JcConstant c = {
         .tag = JC_CONSTANT_TAG_CLASS,
@@ -423,13 +423,13 @@ uint16_t jc_cp_push_class(JcClass *jc, const char *class_name)
     return jc->constant_pool.count;
 }
 
-uint16_t jc_cp_push_utf8(JcClass *jc, const char *bytes)
+uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes)
 {
     JcConstant c = {
         .tag = JC_CONSTANT_TAG_UTF8,
         .as_utf8 = (JcConstantUtf8){
-            .length = strlen(bytes),
-            .bytes = (uint8_t*)bytes,
+            .length = bytes.count,
+            .bytes = (uint8_t*)bytes.data,
         }
     };
 
@@ -437,7 +437,7 @@ uint16_t jc_cp_push_utf8(JcClass *jc, const char *bytes)
     return jc->constant_pool.count;
 }
 
-uint16_t jc_cp_push_string(JcClass *jc, const char *bytes)
+uint16_t jc_cp_push_string(JcClass *jc, String_View bytes)
 {
     JcConstant c = {
         .tag = JC_CONSTANT_TAG_STRING,

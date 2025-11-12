@@ -113,12 +113,12 @@ bool descriptor_to_local_defs(String_View descriptor, LocalDefs *local_defs)
         case '[':
             class_name = sv_chop_by_delim(&descriptor, ';');
             class_name.count += 1;
-            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = strndup(class_name.data, class_name.count) }));
+            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
             break;
 
         case 'L':
             class_name = sv_chop_by_delim(&descriptor, ';');
-            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = strndup(class_name.data, class_name.count) }));
+            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
             break;
 
         default:
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
     stb_c_lexer_init(&lexer, sb.items, sb.items + sb.count, lexer_storage, sizeof(lexer_storage));
 
     JcClass jc = jc_new("Test");
-    jc.sourcefile_index = jc_cp_push_utf8(&jc, file_path);
+    jc.sourcefile_index = jc_cp_push_utf8(&jc, sv_from_cstr(file_path));
 
     // Parsing method
     LocalDefs local_defs = {0};
@@ -371,12 +371,12 @@ int main(int argc, char **argv)
         lexer_expect_keyword(&lexer, "method");
 
         lexer_expect_token(&lexer, CLEX_id);
-        char *name = strdup(lexer.string);
+        String_View name = lexer_token_sv(lexer);
         lexer_expect_token(&lexer, CLEX_dqstring);
-        char *descriptor = strdup(lexer.string);
+        String_View descriptor = lexer_token_sv(lexer);
 
         // Extract argument definitions from descriptor
-        String_View args = sv_from_cstr(descriptor);
+        String_View args = descriptor;
         sv_chop_left(&args, 1);
         args = sv_chop_by_delim(&args, ')');
         if (!descriptor_to_local_defs(args, &local_defs)) return 1;
@@ -395,7 +395,7 @@ int main(int argc, char **argv)
             if (lexer.token == CLEX_id && strcmp(lexer.string, "int") == 0) {
                 da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
             } else if (lexer.token == CLEX_dqstring) {
-                da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = strdup(lexer.string) }));
+                da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = lexer_token_sv(lexer) }));
             }
         }
 
@@ -410,7 +410,7 @@ int main(int argc, char **argv)
                 fprintf(stderr, "ERROR: Unexpected EOF while parsing code\n");
                 return 1;
             }
-            
+
             if (lexer.token == '}') break;
             lexer_check_token_id(lexer, CLEX_id); // TODO: Operands
             JcInstOpcode opcode;
@@ -419,11 +419,8 @@ int main(int argc, char **argv)
         }
     }
 
-
     jc_serialize(jc, "./Test.class");
     return 0;
 }
 
-// TODO: Memory leaks. Maybe 'jvm_class' library should copy strings by itself.
-//       On the other hand it may accept 'String_View' (i think it's better)
 // TODO: At the moment 'jasm' supports only opcodes without operands

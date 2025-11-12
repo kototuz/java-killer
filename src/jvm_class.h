@@ -7,6 +7,8 @@
 #define NOB_STRIP_PREFIX
 #include <nob.h>
 
+#define SV_STATIC(lit) ((String_View){ sizeof(lit) - 1, (lit) })
+
 typedef enum {
     JC_CONSTANT_TAG_CLASS                = 7,
     JC_CONSTANT_TAG_FIELD_REF            = 9,
@@ -313,7 +315,7 @@ typedef enum {
 
 typedef struct {
     JcLocalDefType type;
-    const char *as_object;
+    String_View as_object;
 } JcLocalDef;
 
 typedef struct {
@@ -439,7 +441,7 @@ typedef struct {
 
 JcClass  jc_new(const char *name);
 
-JcMethod *jc_method_new(JcClass *jc, const char *name, const char *descriptor, JcLocalDef *local_defs, uint16_t local_def_count, uint16_t arg_count);
+JcMethod *jc_method_new(JcClass *jc, String_View name, String_View descriptor, JcLocalDef *local_defs, uint16_t local_def_count, uint16_t arg_count);
 #define JC_OPERAND_U8(n)  ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U8,  .as_u8  = (n) })
 #define JC_OPERAND_U16(n) ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U16, .as_u16 = (n) })
 #define JC_OPERAND_U32(n) ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U32, .as_u32 = (n) })
@@ -448,11 +450,11 @@ void     jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *o
 
 // NOTE: Javac before pushing constant to the pool checks whether the pool has that constant.
 // I think pushing duplicates it's fine
-uint16_t jc_cp_push_ref(JcClass *jc, JcConstantTag ref_kind, const char *class_name, const char *method_name, const char *descriptor);
-uint16_t jc_cp_push_name_and_type(JcClass *jc, const char *name, const char *descriptor);
-uint16_t jc_cp_push_class(JcClass *jc, const char *class_name);
-uint16_t jc_cp_push_utf8(JcClass *jc, const char *bytes);   // FIXME: bytes should be a slice
-uint16_t jc_cp_push_string(JcClass *jc, const char *bytes); //
+uint16_t jc_cp_push_ref(JcClass *jc, JcConstantTag ref_kind, String_View class_name, String_View method_name, String_View descriptor);
+uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View descriptor);
+uint16_t jc_cp_push_class(JcClass *jc, String_View class_name);
+uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes);
+uint16_t jc_cp_push_string(JcClass *jc, String_View bytes);
 void     jc_cp_dump(JcClass jc);
 
 bool     jc_serialize(JcClass jc, const char *path);
