@@ -31,7 +31,7 @@
 
 - [x] Implement super basic assembler and publish the project on GitHub
 
-- [ ] `jasm:` Implement branching instructions
+- [x] `jasm:` Implement branching instructions
 
 - [ ] `jasm:` Implement `ldc*` instructions (load constants)
 

@@ -21,6 +21,8 @@ typedef enum {
     OPERAND_TYPE_I8,
     OPERAND_TYPE_U16,
     OPERAND_TYPE_CLASS,
+    OPERAND_TYPE_JMP_LABEL_U16,
+    OPERAND_TYPE_JMP_LABEL_U32,
 } OperandType;
 
 typedef struct {
@@ -35,6 +37,29 @@ typedef struct {
     size_t count;
     size_t capacity;
 } Operands;
+
+typedef struct {
+    String_View name;
+    uint32_t bytecode_offset;
+} JmpLabel;
+
+typedef struct {
+    JmpLabel *items;
+    size_t count;
+    size_t capacity;
+} JmpLabels;
+
+typedef struct {
+    String_View name;
+    uint32_t bytecode_offset;
+    bool is_u32;
+} JmpLabelRef;
+
+typedef struct {
+    JmpLabelRef *items;
+    size_t count;
+    size_t capacity;
+} JmpLabelRefs;
 
 #define OPERAND_TYPES(...) .operand_types = (OperandType[]){__VA_ARGS__}, .operand_type_count = sizeof((OperandType[]){__VA_ARGS__})/sizeof(OperandType)
 static const Instruction instructions[] = {
@@ -209,6 +234,24 @@ static const Instruction instructions[] = {
     { .opcode = JC_INST_OPCODE_SASTORE,         .opcode_name = SV_STATIC("sastore") },
     { .opcode = JC_INST_OPCODE_SIPUSH,          .opcode_name = SV_STATIC("sipush"), OPERAND_TYPES(OPERAND_TYPE_U16) },
     { .opcode = JC_INST_OPCODE_SWAP,            .opcode_name = SV_STATIC("swap") },
+    { .opcode = JC_INST_OPCODE_GOTO,            .opcode_name = SV_STATIC("goto"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_GOTO_W,          .opcode_name = SV_STATIC("goto_w"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U32) },
+    { .opcode = JC_INST_OPCODE_IFEQ,            .opcode_name = SV_STATIC("ifeq"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFNE,            .opcode_name = SV_STATIC("ifne"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFLT,            .opcode_name = SV_STATIC("iflt"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFGE,            .opcode_name = SV_STATIC("ifge"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFGT,            .opcode_name = SV_STATIC("ifgt"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFLE,            .opcode_name = SV_STATIC("ifle"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPEQ,       .opcode_name = SV_STATIC("if_icmpeq"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPNE,       .opcode_name = SV_STATIC("if_icmpne"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPLT,       .opcode_name = SV_STATIC("if_icmplt"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPGE,       .opcode_name = SV_STATIC("if_icmpge"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPGT,       .opcode_name = SV_STATIC("if_icmpgt"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ICMPLE,       .opcode_name = SV_STATIC("if_icmple"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ACMPEQ,       .opcode_name = SV_STATIC("if_acmpeq"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IF_ACMPNE,       .opcode_name = SV_STATIC("if_acmpne"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFNULL,          .opcode_name = SV_STATIC("ifnull"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_IFNONNULL,       .opcode_name = SV_STATIC("ifnonnull"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
 };
 
 static char lexer_storage[1024] = {0};
@@ -449,15 +492,35 @@ bool lexer_expect_int(stb_lexer *lexer)
     }
 }
 
-bool parse_instruction(stb_lexer *lexer, String_View opcode, JcClass *jc, JcInstOpcode *res_opcode, Operands *res_operands)
+bool find_label(JmpLabels jmp_labels, String_View label_name, JmpLabel *result)
 {
+    da_foreach(JmpLabel, l, &jmp_labels) {
+        if (sv_eq(l->name, label_name)) {
+            *result = *l;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool parse_and_compile_inst(
+        stb_lexer *lexer,
+        String_View opcode,
+        JcMethod *method,
+        JcClass *jc,
+        JmpLabelRefs *jmp_label_refs)
+{
+    static Operands operand_buf = {0};
+
+    operand_buf.count = 0;
+
     stb_lex_location loc;
     JcInstOperand operand;
     String_View ref_class, ref_name, ref_descriptor;
     for (size_t i = 0; i < ARRAY_LEN(instructions); i++) {
         Instruction inst = instructions[i];
         if (sv_eq(opcode, inst.opcode_name)) {
-            *res_opcode = inst.opcode;
             for (size_t j = 0; j < inst.operand_type_count; j++) {
                 switch (inst.operand_types[j]) {
                 case OPERAND_TYPE_FIELD_REF: {
@@ -514,12 +577,38 @@ bool parse_instruction(stb_lexer *lexer, String_View opcode, JcClass *jc, JcInst
                     operand.as_u16 = jc_cp_push_class(jc, lexer_token_sv(*lexer));
                 } break;
 
+                case OPERAND_TYPE_JMP_LABEL_U16: {
+                    if (!lexer_expect_token(lexer, CLEX_id)) return false;
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    operand.as_u16 = 0;
+                    stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                    da_append(jmp_label_refs, ((JmpLabelRef){
+                        .name = lexer_token_sv(*lexer),
+                        .bytecode_offset = method->code.count,
+                    }));
+                } break;
+
+                case OPERAND_TYPE_JMP_LABEL_U32: {
+                    if (!lexer_expect_token(lexer, CLEX_id)) return false;
+                    operand.tag = JC_INST_OPERAND_TAG_U32;
+                    operand.as_u32 = 0;
+                    stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                    da_append(jmp_label_refs, ((JmpLabelRef){
+                        .name = lexer_token_sv(*lexer),
+                        .bytecode_offset = method->code.count,
+                        .is_u32 = true,
+                    }));
+                } break;
+
                 default:
-                    UNREACHABLE("parse_instruction");
+                    UNREACHABLE("parse_and_compile_inst");
                 }
 
-                da_append(res_operands, operand);
+                da_append(&operand_buf, operand);
             }
+
+            nob_log(INFO, "pushing '"SV_Fmt"', %zu operands", SV_Arg(opcode), operand_buf.count);
+            jc_method_push_inst_(method, inst.opcode, operand_buf.items, operand_buf.count);
 
             return true;
         }
@@ -551,9 +640,12 @@ int main(int argc, char **argv)
 
     // Parsing method
     LocalDefs local_defs = {0};
-    while (stb_c_lexer_get_token(&lexer))
-    {
+    JmpLabels jmp_labels = {0};
+    JmpLabelRefs jmp_label_refs = {0};
+    while (stb_c_lexer_get_token(&lexer)) {
         local_defs.count = 0;
+        jmp_labels.count = 0;
+        jmp_label_refs.count = 0;
 
         if (lexer.token != '.') {
             report_unexpected_token(lexer);
@@ -591,23 +683,56 @@ int main(int argc, char **argv)
         method->access_flags = JC_ACCESS_FLAG_PUBLIC | JC_ACCESS_FLAG_STATIC;
 
         // Parse code
-        Operands inst_operands = {0};
-        JcInstOpcode inst_opcode;
         if (!lexer_expect_token(&lexer, '{')) return 1;
         for (;;) {
             stb_c_lexer_get_token(&lexer);
             if (lexer.token == '}') {
                 break;
             } else if (lexer.token == CLEX_id) {
-                inst_operands.count = 0;
                 String_View opcode = lexer_token_sv(lexer);
-                if (!parse_instruction(&lexer, opcode, &jc, &inst_opcode, &inst_operands)) return 1;
-                nob_log(INFO, "pushing '"SV_Fmt"', %zu operands", SV_Arg(opcode), inst_operands.count);
-                jc_method_push_inst_(method, inst_opcode, inst_operands.items, inst_operands.count);
+                if (!parse_and_compile_inst(&lexer, opcode, method, &jc, &jmp_label_refs)) return 1;
+            } else if (lexer.token == '.') {
+                if (!lexer_expect_token(&lexer, CLEX_id)) return 1;
+                da_append(&jmp_labels, ((JmpLabel){
+                    .name = lexer_token_sv(lexer),
+                    .bytecode_offset = method->code.count,
+                }));
             } else {
                 report_unexpected_token(lexer);
                 return 1;
             }
+        }
+
+        // Substite label offsets
+        da_foreach(JmpLabelRef, label_ref, &jmp_label_refs) {
+            JmpLabel label;
+            if (!find_label(jmp_labels, label_ref->name,  &label)) {
+                fprintf(stderr, "ERROR: Label '"SV_Fmt"' is undefined\n", SV_Arg(label_ref->name));
+                return 1;
+            }
+
+            union {
+                uint32_t as_u32;
+                uint8_t as_bytes[4];
+            } offset;
+
+            offset.as_u32 = label.bytecode_offset - label_ref->bytecode_offset;
+            uint8_t *code_ptr = &method->code.items[label_ref->bytecode_offset + 1];
+            if (label_ref->is_u32) {
+                // Write as little endian
+                code_ptr[0] = offset.as_bytes[3];
+                code_ptr[1] = offset.as_bytes[2];
+                code_ptr[2] = offset.as_bytes[1];
+                code_ptr[3] = offset.as_bytes[0];
+            } else {
+                // Write as little endian
+                code_ptr[0] = offset.as_bytes[1];
+                code_ptr[1] = offset.as_bytes[0];
+            }
+        }
+
+        da_foreach(JmpLabel, label, &jmp_labels) {
+            jc_method_push_frame(method, label->bytecode_offset);
         }
     }
 
@@ -615,5 +740,4 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// TODO: At the moment 'jasm' supports only opcodes without operands
 // TODO: Ability to define stack size

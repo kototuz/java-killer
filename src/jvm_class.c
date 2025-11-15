@@ -330,6 +330,33 @@ JcMethod *jc_method_new(
 void jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count)
 {
     da_append(&m->code, (uint8_t)opcode);
+    for (size_t i = 0; i < operand_count; i++) {
+        switch (operands[i].tag) { 
+        case JC_INST_OPERAND_TAG_U8:
+            da_append(&m->code, operands[i].as_u8);
+            break;
+
+        case JC_INST_OPERAND_TAG_U16:
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u16)[1]);
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u16)[0]);
+            break;
+
+        case JC_INST_OPERAND_TAG_U32:
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u32)[3]);
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u32)[2]);
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u32)[1]);
+            da_append(&m->code, ((uint8_t*)&operands[i].as_u32)[0]);
+            break;
+
+        default:
+            UNREACHABLE("Unknown operand tag");
+        }
+    }
+}
+
+void jc_method_push_inst2_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count)
+{
+    da_append(&m->code, (uint8_t)opcode);
 
     { // Push new frame if it is branching instruction
         assert(opcode < JC_INST_OPCODE_COUNT);
@@ -375,6 +402,17 @@ void jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *opera
             UNREACHABLE("Unknown operand tag");
         }
     }
+}
+
+void jc_method_push_frame(JcMethod *m, uint32_t offset)
+{
+    assert(offset < m->code.count);
+    uint16_t offset_from_prev = offset - m->stack_map_frames.last_frame_loc - 1;
+    m->stack_map_frames.last_frame_loc = offset;
+    m->stack_map_frames.count += 1;
+    da_append(&m->stack_map_frames.bytes, 251); // same frame extended
+    da_append(&m->stack_map_frames.bytes, ((uint8_t*)&offset_from_prev)[1]);
+    da_append(&m->stack_map_frames.bytes, ((uint8_t*)&offset_from_prev)[0]);
 }
 
 uint16_t jc_cp_push_ref(

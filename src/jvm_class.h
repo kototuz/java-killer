@@ -442,11 +442,20 @@ typedef struct {
 JcClass  jc_new(const char *name);
 
 JcMethod *jc_method_new(JcClass *jc, String_View name, String_View descriptor, JcLocalDef *local_defs, uint16_t local_def_count, uint16_t arg_count);
+
 #define JC_OPERAND_U8(n)  ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U8,  .as_u8  = (n) })
 #define JC_OPERAND_U16(n) ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U16, .as_u16 = (n) })
 #define JC_OPERAND_U32(n) ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U32, .as_u32 = (n) })
+
 #define jc_method_push_inst(method, opcode, ...) (jc_method_push_inst_(method, opcode, (JcInstOperand[]){__VA_ARGS__}, sizeof((JcInstOperand[]){__VA_ARGS__})/sizeof(JcInstOperand)))
-void     jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count);
+void jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count);
+
+// NOTE: The difference is that the function also detects branching
+// instruction and then creates new frame in 'StackMapTable'
+#define jc_method_push_inst2(method, opcode, ...) (jc_method_push_inst_(method, opcode, (JcInstOperand[]){__VA_ARGS__}, sizeof((JcInstOperand[]){__VA_ARGS__})/sizeof(JcInstOperand)))
+void jc_method_push_inst2_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count);
+
+void jc_method_push_frame(JcMethod *m, uint32_t offset);
 
 // NOTE: Javac before pushing constant to the pool checks whether the pool has that constant.
 // I think pushing duplicates it's fine
