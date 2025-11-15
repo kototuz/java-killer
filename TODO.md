@@ -31,6 +31,12 @@
 
 - [x] Implement super basic assembler and publish the project on GitHub
 
+- [ ] `jasm:` Implement branching instructions
+
+- [ ] `jasm:` Implement `ldc*` instructions (load constants)
+
+- [ ] `jasm:` Update format for instruction operands (e.g "MyClass.field:I" -> MyClass field I)
+
 - [ ] Try to find some simple frontend for the language because i don't want implement it myself.
       I am building only a backend, building a frontend is also a difficult problem.
 

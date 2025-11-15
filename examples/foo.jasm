@@ -1,13 +1,34 @@
-.method main "([Ljava/lang/String;)V" ["Ljava/lang/String" int int int]
+.method main "([Ljava/lang/String;)V" []
 {
-    iconst_1
-    iconst_1
-    iadd
-    istore_2
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    aload 0
+    arraylength
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    bipush -128
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    sipush -32768
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    bipush 10
+    anewarray "java/lang/String"
+    arraylength
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    invokestatic "Test.foo:()V"
+
     return
 }
 
 .method foo "()V" []
 {
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    sipush 6969
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
     return
 }

@@ -14,6 +14,203 @@ typedef struct {
     uint16_t capacity;
 } LocalDefs;
 
+typedef enum {
+    OPERAND_TYPE_FIELD_REF,
+    OPERAND_TYPE_METHOD_REF,
+    OPERAND_TYPE_U8,
+    OPERAND_TYPE_I8,
+    OPERAND_TYPE_U16,
+    OPERAND_TYPE_CLASS,
+} OperandType;
+
+typedef struct {
+    JcInstOpcode opcode;
+    String_View opcode_name;
+    OperandType *operand_types;
+    size_t operand_type_count;
+} Instruction;
+
+typedef struct {
+    JcInstOperand *items;
+    size_t count;
+    size_t capacity;
+} Operands;
+
+#define OPERAND_TYPES(...) .operand_types = (OperandType[]){__VA_ARGS__}, .operand_type_count = sizeof((OperandType[]){__VA_ARGS__})/sizeof(OperandType)
+static const Instruction instructions[] = {
+    { .opcode = JC_INST_OPCODE_AALOAD,          .opcode_name = SV_STATIC("aaload") },
+    { .opcode = JC_INST_OPCODE_AASTORE,         .opcode_name = SV_STATIC("aastore") },
+    { .opcode = JC_INST_OPCODE_ACONST_NULL,     .opcode_name = SV_STATIC("aconst_null") },
+    { .opcode = JC_INST_OPCODE_ALOAD,           .opcode_name = SV_STATIC("aload"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_ALOAD_0,         .opcode_name = SV_STATIC("aload_0") },
+    { .opcode = JC_INST_OPCODE_ALOAD_1,         .opcode_name = SV_STATIC("aload_1") },
+    { .opcode = JC_INST_OPCODE_ALOAD_2,         .opcode_name = SV_STATIC("aload_2") },
+    { .opcode = JC_INST_OPCODE_ALOAD_3,         .opcode_name = SV_STATIC("aload_3") },
+    { .opcode = JC_INST_OPCODE_ANEWARRAY,       .opcode_name = SV_STATIC("anewarray"), OPERAND_TYPES(OPERAND_TYPE_CLASS) },
+    { .opcode = JC_INST_OPCODE_ARETURN,         .opcode_name = SV_STATIC("areturn") },
+    { .opcode = JC_INST_OPCODE_ARRAYLENGTH,     .opcode_name = SV_STATIC("arraylength") },
+    { .opcode = JC_INST_OPCODE_ASTORE,          .opcode_name = SV_STATIC("astore"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_ASTORE_0,        .opcode_name = SV_STATIC("astore_0") },
+    { .opcode = JC_INST_OPCODE_ASTORE_1,        .opcode_name = SV_STATIC("astore_1") },
+    { .opcode = JC_INST_OPCODE_ASTORE_2,        .opcode_name = SV_STATIC("astore_2") },
+    { .opcode = JC_INST_OPCODE_ASTORE_3,        .opcode_name = SV_STATIC("astore_3") },
+    { .opcode = JC_INST_OPCODE_ATHROW,          .opcode_name = SV_STATIC("athrow") },
+    { .opcode = JC_INST_OPCODE_BALOAD,          .opcode_name = SV_STATIC("baload") },
+    { .opcode = JC_INST_OPCODE_BASTORE,         .opcode_name = SV_STATIC("bastore") },
+    { .opcode = JC_INST_OPCODE_BIPUSH,          .opcode_name = SV_STATIC("bipush"), OPERAND_TYPES(OPERAND_TYPE_I8) },
+    { .opcode = JC_INST_OPCODE_CALOAD,          .opcode_name = SV_STATIC("caload") },
+    { .opcode = JC_INST_OPCODE_CASTORE,         .opcode_name = SV_STATIC("castore") },
+    { .opcode = JC_INST_OPCODE_CHECKCAST,       .opcode_name = SV_STATIC("checkcast"), OPERAND_TYPES(OPERAND_TYPE_CLASS) },
+    { .opcode = JC_INST_OPCODE_D2F,             .opcode_name = SV_STATIC("d2f") },
+    { .opcode = JC_INST_OPCODE_D2I,             .opcode_name = SV_STATIC("d2i") },
+    { .opcode = JC_INST_OPCODE_D2L,             .opcode_name = SV_STATIC("d2l") },
+    { .opcode = JC_INST_OPCODE_DADD,            .opcode_name = SV_STATIC("dadd") },
+    { .opcode = JC_INST_OPCODE_DALOAD,          .opcode_name = SV_STATIC("daload") },
+    { .opcode = JC_INST_OPCODE_DASTORE,         .opcode_name = SV_STATIC("dastore") },
+    { .opcode = JC_INST_OPCODE_DCMPG,           .opcode_name = SV_STATIC("dcmpg") },
+    { .opcode = JC_INST_OPCODE_DCMPL,           .opcode_name = SV_STATIC("dcmpl") },
+    { .opcode = JC_INST_OPCODE_DCONST_0,        .opcode_name = SV_STATIC("dconst_0") },
+    { .opcode = JC_INST_OPCODE_DCONST_1,        .opcode_name = SV_STATIC("dconst_1") },
+    { .opcode = JC_INST_OPCODE_DDIV,            .opcode_name = SV_STATIC("ddiv") },
+    { .opcode = JC_INST_OPCODE_DLOAD,           .opcode_name = SV_STATIC("dload"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_DLOAD_0,         .opcode_name = SV_STATIC("dload_0") },
+    { .opcode = JC_INST_OPCODE_DLOAD_1,         .opcode_name = SV_STATIC("dload_1") },
+    { .opcode = JC_INST_OPCODE_DLOAD_2,         .opcode_name = SV_STATIC("dload_2") },
+    { .opcode = JC_INST_OPCODE_DLOAD_3,         .opcode_name = SV_STATIC("dload_3") },
+    { .opcode = JC_INST_OPCODE_DMUL,            .opcode_name = SV_STATIC("dmul") },
+    { .opcode = JC_INST_OPCODE_DNEG,            .opcode_name = SV_STATIC("dneg") },
+    { .opcode = JC_INST_OPCODE_DREM,            .opcode_name = SV_STATIC("drem") },
+    { .opcode = JC_INST_OPCODE_DRETURN,         .opcode_name = SV_STATIC("dreturn") },
+    { .opcode = JC_INST_OPCODE_DSTORE,          .opcode_name = SV_STATIC("dstore"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_DSTORE_0,        .opcode_name = SV_STATIC("dstore_0") },
+    { .opcode = JC_INST_OPCODE_DSTORE_1,        .opcode_name = SV_STATIC("dstore_1") },
+    { .opcode = JC_INST_OPCODE_DSTORE_2,        .opcode_name = SV_STATIC("dstore_2") },
+    { .opcode = JC_INST_OPCODE_DSTORE_3,        .opcode_name = SV_STATIC("dstore_3") },
+    { .opcode = JC_INST_OPCODE_DSUB,            .opcode_name = SV_STATIC("dsub") },
+    { .opcode = JC_INST_OPCODE_DUP2,            .opcode_name = SV_STATIC("dup2") },
+    { .opcode = JC_INST_OPCODE_DUP2_X1,         .opcode_name = SV_STATIC("dup2_x1") },
+    { .opcode = JC_INST_OPCODE_DUP2_X2,         .opcode_name = SV_STATIC("dup2_x2") },
+    { .opcode = JC_INST_OPCODE_DUP,             .opcode_name = SV_STATIC("dup") },
+    { .opcode = JC_INST_OPCODE_DUP_X1,          .opcode_name = SV_STATIC("dup_x1") },
+    { .opcode = JC_INST_OPCODE_DUP_X2,          .opcode_name = SV_STATIC("dup_x2") },
+    { .opcode = JC_INST_OPCODE_F2D,             .opcode_name = SV_STATIC("f2d") },
+    { .opcode = JC_INST_OPCODE_F2I,             .opcode_name = SV_STATIC("f2i") },
+    { .opcode = JC_INST_OPCODE_F2L,             .opcode_name = SV_STATIC("f2l") },
+    { .opcode = JC_INST_OPCODE_FADD,            .opcode_name = SV_STATIC("fadd") },
+    { .opcode = JC_INST_OPCODE_FALOAD,          .opcode_name = SV_STATIC("faload") },
+    { .opcode = JC_INST_OPCODE_FASTORE,         .opcode_name = SV_STATIC("fastore") },
+    { .opcode = JC_INST_OPCODE_FCMPG,           .opcode_name = SV_STATIC("fcmpg") },
+    { .opcode = JC_INST_OPCODE_FCMPL,           .opcode_name = SV_STATIC("fcmpl") },
+    { .opcode = JC_INST_OPCODE_FCONST_0,        .opcode_name = SV_STATIC("fconst_0") },
+    { .opcode = JC_INST_OPCODE_FCONST_1,        .opcode_name = SV_STATIC("fconst_1") },
+    { .opcode = JC_INST_OPCODE_FCONST_2,        .opcode_name = SV_STATIC("fconst_2") },
+    { .opcode = JC_INST_OPCODE_FDIV,            .opcode_name = SV_STATIC("fdiv") },
+    { .opcode = JC_INST_OPCODE_FLOAD,           .opcode_name = SV_STATIC("fload"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_FLOAD_0,         .opcode_name = SV_STATIC("fload_0") },
+    { .opcode = JC_INST_OPCODE_FLOAD_1,         .opcode_name = SV_STATIC("fload_1") },
+    { .opcode = JC_INST_OPCODE_FLOAD_2,         .opcode_name = SV_STATIC("fload_2") },
+    { .opcode = JC_INST_OPCODE_FLOAD_3,         .opcode_name = SV_STATIC("fload_3") },
+    { .opcode = JC_INST_OPCODE_FMUL,            .opcode_name = SV_STATIC("fmul") },
+    { .opcode = JC_INST_OPCODE_FNEG,            .opcode_name = SV_STATIC("fneg") },
+    { .opcode = JC_INST_OPCODE_FREM,            .opcode_name = SV_STATIC("frem") },
+    { .opcode = JC_INST_OPCODE_FRETURN,         .opcode_name = SV_STATIC("freturn") },
+    { .opcode = JC_INST_OPCODE_FSTORE,          .opcode_name = SV_STATIC("fstore"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_FSTORE_0,        .opcode_name = SV_STATIC("fstore_0") },
+    { .opcode = JC_INST_OPCODE_FSTORE_1,        .opcode_name = SV_STATIC("fstore_1") },
+    { .opcode = JC_INST_OPCODE_FSTORE_2,        .opcode_name = SV_STATIC("fstore_2") },
+    { .opcode = JC_INST_OPCODE_FSTORE_3,        .opcode_name = SV_STATIC("fstore_3") },
+    { .opcode = JC_INST_OPCODE_FSUB,            .opcode_name = SV_STATIC("fsub") },
+    { .opcode = JC_INST_OPCODE_GETFIELD,        .opcode_name = SV_STATIC("getfield"), OPERAND_TYPES(OPERAND_TYPE_FIELD_REF) },
+    { .opcode = JC_INST_OPCODE_GETSTATIC,       .opcode_name = SV_STATIC("getstatic"), OPERAND_TYPES(OPERAND_TYPE_FIELD_REF) },
+    { .opcode = JC_INST_OPCODE_I2B,             .opcode_name = SV_STATIC("i2b") },
+    { .opcode = JC_INST_OPCODE_I2C,             .opcode_name = SV_STATIC("i2c") },
+    { .opcode = JC_INST_OPCODE_I2D,             .opcode_name = SV_STATIC("i2d") },
+    { .opcode = JC_INST_OPCODE_I2F,             .opcode_name = SV_STATIC("i2f") },
+    { .opcode = JC_INST_OPCODE_I2L,             .opcode_name = SV_STATIC("i2l") },
+    { .opcode = JC_INST_OPCODE_I2S,             .opcode_name = SV_STATIC("i2s") },
+    { .opcode = JC_INST_OPCODE_IADD,            .opcode_name = SV_STATIC("iadd") },
+    { .opcode = JC_INST_OPCODE_IALOAD,          .opcode_name = SV_STATIC("iaload") },
+    { .opcode = JC_INST_OPCODE_IAND,            .opcode_name = SV_STATIC("iand") },
+    { .opcode = JC_INST_OPCODE_IASTORE,         .opcode_name = SV_STATIC("iastore") },
+    { .opcode = JC_INST_OPCODE_ICONST_0,        .opcode_name = SV_STATIC("iconst_0") },
+    { .opcode = JC_INST_OPCODE_ICONST_1,        .opcode_name = SV_STATIC("iconst_1") },
+    { .opcode = JC_INST_OPCODE_ICONST_2,        .opcode_name = SV_STATIC("iconst_2") },
+    { .opcode = JC_INST_OPCODE_ICONST_3,        .opcode_name = SV_STATIC("iconst_3") },
+    { .opcode = JC_INST_OPCODE_ICONST_4,        .opcode_name = SV_STATIC("iconst_4") },
+    { .opcode = JC_INST_OPCODE_ICONST_5,        .opcode_name = SV_STATIC("iconst_5") },
+    { .opcode = JC_INST_OPCODE_ICONST_M1,       .opcode_name = SV_STATIC("iconst_m1") },
+    { .opcode = JC_INST_OPCODE_IDIV,            .opcode_name = SV_STATIC("idiv") },
+    { .opcode = JC_INST_OPCODE_IINC,            .opcode_name = SV_STATIC("iinc"), OPERAND_TYPES(OPERAND_TYPE_U8, OPERAND_TYPE_I8) },
+    { .opcode = JC_INST_OPCODE_ILOAD,           .opcode_name = SV_STATIC("iload"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_ILOAD_0,         .opcode_name = SV_STATIC("iload_0") },
+    { .opcode = JC_INST_OPCODE_ILOAD_1,         .opcode_name = SV_STATIC("iload_1") },
+    { .opcode = JC_INST_OPCODE_ILOAD_2,         .opcode_name = SV_STATIC("iload_2") },
+    { .opcode = JC_INST_OPCODE_ILOAD_3,         .opcode_name = SV_STATIC("iload_3") },
+    { .opcode = JC_INST_OPCODE_IMUL,            .opcode_name = SV_STATIC("imul") },
+    { .opcode = JC_INST_OPCODE_INEG,            .opcode_name = SV_STATIC("ineg") },
+    { .opcode = JC_INST_OPCODE_INSTANCEOF,      .opcode_name = SV_STATIC("instanceof"), OPERAND_TYPES(OPERAND_TYPE_CLASS) },
+    { .opcode = JC_INST_OPCODE_INVOKESTATIC,    .opcode_name = SV_STATIC("invokestatic"), OPERAND_TYPES(OPERAND_TYPE_METHOD_REF) },
+    { .opcode = JC_INST_OPCODE_INVOKEVIRTUAL,   .opcode_name = SV_STATIC("invokevirtual"), OPERAND_TYPES(OPERAND_TYPE_METHOD_REF) },
+    { .opcode = JC_INST_OPCODE_IOR,             .opcode_name = SV_STATIC("ior") },
+    { .opcode = JC_INST_OPCODE_IREM,            .opcode_name = SV_STATIC("irem") },
+    { .opcode = JC_INST_OPCODE_IRETURN,         .opcode_name = SV_STATIC("ireturn") },
+    { .opcode = JC_INST_OPCODE_ISHL,            .opcode_name = SV_STATIC("ishl") },
+    { .opcode = JC_INST_OPCODE_ISHR,            .opcode_name = SV_STATIC("ishr") },
+    { .opcode = JC_INST_OPCODE_ISTORE,          .opcode_name = SV_STATIC("istore"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_ISTORE_0,        .opcode_name = SV_STATIC("istore_0") },
+    { .opcode = JC_INST_OPCODE_ISTORE_1,        .opcode_name = SV_STATIC("istore_1") },
+    { .opcode = JC_INST_OPCODE_ISTORE_2,        .opcode_name = SV_STATIC("istore_2") },
+    { .opcode = JC_INST_OPCODE_ISTORE_3,        .opcode_name = SV_STATIC("istore_3") },
+    { .opcode = JC_INST_OPCODE_ISUB,            .opcode_name = SV_STATIC("isub") },
+    { .opcode = JC_INST_OPCODE_IUSHR,           .opcode_name = SV_STATIC("iushr") },
+    { .opcode = JC_INST_OPCODE_IXOR,            .opcode_name = SV_STATIC("ixor") },
+    { .opcode = JC_INST_OPCODE_L2D,             .opcode_name = SV_STATIC("l2d") },
+    { .opcode = JC_INST_OPCODE_L2F,             .opcode_name = SV_STATIC("l2f") },
+    { .opcode = JC_INST_OPCODE_L2I,             .opcode_name = SV_STATIC("l2i") },
+    { .opcode = JC_INST_OPCODE_LADD,            .opcode_name = SV_STATIC("ladd") },
+    { .opcode = JC_INST_OPCODE_LALOAD,          .opcode_name = SV_STATIC("laload") },
+    { .opcode = JC_INST_OPCODE_LAND,            .opcode_name = SV_STATIC("land") },
+    { .opcode = JC_INST_OPCODE_LASTORE,         .opcode_name = SV_STATIC("lastore") },
+    { .opcode = JC_INST_OPCODE_LCMP,            .opcode_name = SV_STATIC("lcmp") },
+    { .opcode = JC_INST_OPCODE_LCONST_0,        .opcode_name = SV_STATIC("lconst_0") },
+    { .opcode = JC_INST_OPCODE_LCONST_1,        .opcode_name = SV_STATIC("lconst_1") },
+    { .opcode = JC_INST_OPCODE_LDIV,            .opcode_name = SV_STATIC("ldiv") },
+    { .opcode = JC_INST_OPCODE_LLOAD,           .opcode_name = SV_STATIC("lload"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_LLOAD_0,         .opcode_name = SV_STATIC("lload_0") },
+    { .opcode = JC_INST_OPCODE_LLOAD_1,         .opcode_name = SV_STATIC("lload_1") },
+    { .opcode = JC_INST_OPCODE_LLOAD_2,         .opcode_name = SV_STATIC("lload_2") },
+    { .opcode = JC_INST_OPCODE_LLOAD_3,         .opcode_name = SV_STATIC("lload_3") },
+    { .opcode = JC_INST_OPCODE_LMUL,            .opcode_name = SV_STATIC("lmul") },
+    { .opcode = JC_INST_OPCODE_LNEG,            .opcode_name = SV_STATIC("lneg") },
+    { .opcode = JC_INST_OPCODE_LOR,             .opcode_name = SV_STATIC("lor") },
+    { .opcode = JC_INST_OPCODE_LREM,            .opcode_name = SV_STATIC("lrem") },
+    { .opcode = JC_INST_OPCODE_LRETURN,         .opcode_name = SV_STATIC("lreturn") },
+    { .opcode = JC_INST_OPCODE_LSHL,            .opcode_name = SV_STATIC("lshl") },
+    { .opcode = JC_INST_OPCODE_LSHR,            .opcode_name = SV_STATIC("lshr") },
+    { .opcode = JC_INST_OPCODE_LSTORE,          .opcode_name = SV_STATIC("lstore"), OPERAND_TYPES(OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_LSTORE_0,        .opcode_name = SV_STATIC("lstore_0") },
+    { .opcode = JC_INST_OPCODE_LSTORE_1,        .opcode_name = SV_STATIC("lstore_1") },
+    { .opcode = JC_INST_OPCODE_LSTORE_2,        .opcode_name = SV_STATIC("lstore_2") },
+    { .opcode = JC_INST_OPCODE_LSTORE_3,        .opcode_name = SV_STATIC("lstore_3") },
+    { .opcode = JC_INST_OPCODE_LSUB,            .opcode_name = SV_STATIC("lsub") },
+    { .opcode = JC_INST_OPCODE_LUSHR,           .opcode_name = SV_STATIC("lushr") },
+    { .opcode = JC_INST_OPCODE_LXOR,            .opcode_name = SV_STATIC("lxor") },
+    { .opcode = JC_INST_OPCODE_MONITORENTER,    .opcode_name = SV_STATIC("monitorenter") },
+    { .opcode = JC_INST_OPCODE_MONITOREXIT,     .opcode_name = SV_STATIC("monitorexit") },
+    { .opcode = JC_INST_OPCODE_MULTIANEWARRAY,  .opcode_name = SV_STATIC("multianewarray"), OPERAND_TYPES(OPERAND_TYPE_CLASS, OPERAND_TYPE_U8) },
+    { .opcode = JC_INST_OPCODE_NEW,             .opcode_name = SV_STATIC("new"), OPERAND_TYPES(OPERAND_TYPE_CLASS) },
+    { .opcode = JC_INST_OPCODE_NOP,             .opcode_name = SV_STATIC("nop") },
+    { .opcode = JC_INST_OPCODE_POP2,            .opcode_name = SV_STATIC("pop2") },
+    { .opcode = JC_INST_OPCODE_POP,             .opcode_name = SV_STATIC("pop") },
+    { .opcode = JC_INST_OPCODE_PUTFIELD,        .opcode_name = SV_STATIC("putfield"), OPERAND_TYPES(OPERAND_TYPE_FIELD_REF) },
+    { .opcode = JC_INST_OPCODE_PUTSTATIC,       .opcode_name = SV_STATIC("putstatic"), OPERAND_TYPES(OPERAND_TYPE_FIELD_REF) },
+    { .opcode = JC_INST_OPCODE_RETURN,          .opcode_name = SV_STATIC("return") },
+    { .opcode = JC_INST_OPCODE_SALOAD,          .opcode_name = SV_STATIC("saload") },
+    { .opcode = JC_INST_OPCODE_SASTORE,         .opcode_name = SV_STATIC("sastore") },
+    { .opcode = JC_INST_OPCODE_SIPUSH,          .opcode_name = SV_STATIC("sipush"), OPERAND_TYPES(OPERAND_TYPE_U16) },
+    { .opcode = JC_INST_OPCODE_SWAP,            .opcode_name = SV_STATIC("swap") },
+};
+
 static char lexer_storage[1024] = {0};
 
 const char *lexer_token_id_string(long token_id)
@@ -26,7 +223,7 @@ const char *lexer_token_id_string(long token_id)
     case CLEX_floatlit:           return "float";
     case CLEX_id:                 return "identifier";
     case CLEX_dqstring:           return "string";
-    case CLEX_sqstring:           return "string";
+    case CLEX_sqstring:           return "NOT USED";
     case CLEX_charlit:            return "NOT USED";
     case CLEX_eq:                 return "NOT USED";
     case CLEX_noteq:              return "NOT USED";
@@ -176,37 +373,6 @@ bool lexer_expect_method_descriptor(stb_lexer *lexer, LocalDefs *result)
     return true;
 }
 
-// Parses sequence of types e.g. 'IBLjava/lang/String;' -> [int, byte, class 'java/lang/String']
-bool descriptor_to_local_defs(String_View descriptor, LocalDefs *local_defs)
-{
-    while (descriptor.count > 0) {
-        String_View class_name;
-        switch (descriptor.data[0]) {
-        case 'I':
-            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
-            sv_chop_left(&descriptor, 1);
-            break;
-
-        case '[':
-            class_name = sv_chop_by_delim(&descriptor, ';');
-            class_name.count += 1;
-            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
-            break;
-
-        case 'L':
-            class_name = sv_chop_by_delim(&descriptor, ';');
-            da_append(local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
-            break;
-
-        default:
-            fprintf(stderr, "ERROR: Unknown type declaration '%c'\n", descriptor.data[0]);
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void report_unexpected_token(stb_lexer lexer)
 {
     stb_lex_location loc;
@@ -214,215 +380,154 @@ void report_unexpected_token(stb_lexer lexer)
     fprintf(stderr, "ERROR:"LOC_Fmt": Unexpected token '%s'\n", LOC_Arg(loc), lexer_token_id_string(lexer.token));
 }
 
-bool opcode_from_name(const char *name, JcInstOpcode *result)
+bool lexer_expect_ref(
+        stb_lexer *lexer,
+        String_View *res_class,
+        String_View *res_name,
+        String_View *res_descriptor)
 {
-    if (strcmp(name, "nop") == 0)                  *result = JC_INST_OPCODE_NOP;
-    else if (strcmp(name, "aconst_null") == 0)     *result = JC_INST_OPCODE_ACONST_NULL;
-    else if (strcmp(name, "iconst_m1") == 0)       *result = JC_INST_OPCODE_ICONST_M1;
-    else if (strcmp(name, "iconst_0") == 0)        *result = JC_INST_OPCODE_ICONST_0;
-    else if (strcmp(name, "iconst_1") == 0)        *result = JC_INST_OPCODE_ICONST_1;
-    else if (strcmp(name, "iconst_2") == 0)        *result = JC_INST_OPCODE_ICONST_2;
-    else if (strcmp(name, "iconst_3") == 0)        *result = JC_INST_OPCODE_ICONST_3;
-    else if (strcmp(name, "iconst_4") == 0)        *result = JC_INST_OPCODE_ICONST_4;
-    else if (strcmp(name, "iconst_5") == 0)        *result = JC_INST_OPCODE_ICONST_5;
-    else if (strcmp(name, "lconst_0") == 0)        *result = JC_INST_OPCODE_LCONST_0;
-    else if (strcmp(name, "lconst_1") == 0)        *result = JC_INST_OPCODE_LCONST_1;
-    else if (strcmp(name, "fconst_0") == 0)        *result = JC_INST_OPCODE_FCONST_0;
-    else if (strcmp(name, "fconst_1") == 0)        *result = JC_INST_OPCODE_FCONST_1;
-    else if (strcmp(name, "fconst_2") == 0)        *result = JC_INST_OPCODE_FCONST_2;
-    else if (strcmp(name, "dconst_0") == 0)        *result = JC_INST_OPCODE_DCONST_0;
-    else if (strcmp(name, "dconst_1") == 0)        *result = JC_INST_OPCODE_DCONST_1;
-    else if (strcmp(name, "bipush") == 0)          *result = JC_INST_OPCODE_BIPUSH;
-    else if (strcmp(name, "sipush") == 0)          *result = JC_INST_OPCODE_SIPUSH;
-    else if (strcmp(name, "ldc") == 0)             *result = JC_INST_OPCODE_LDC;
-    else if (strcmp(name, "ldc_w") == 0)           *result = JC_INST_OPCODE_LDC_W;
-    else if (strcmp(name, "ldc2_w") == 0)          *result = JC_INST_OPCODE_LDC2_W;
-    else if (strcmp(name, "iload") == 0)           *result = JC_INST_OPCODE_ILOAD;
-    else if (strcmp(name, "lload") == 0)           *result = JC_INST_OPCODE_LLOAD;
-    else if (strcmp(name, "fload") == 0)           *result = JC_INST_OPCODE_FLOAD;
-    else if (strcmp(name, "dload") == 0)           *result = JC_INST_OPCODE_DLOAD;
-    else if (strcmp(name, "aload") == 0)           *result = JC_INST_OPCODE_ALOAD;
-    else if (strcmp(name, "iload_0") == 0)         *result = JC_INST_OPCODE_ILOAD_0;
-    else if (strcmp(name, "iload_1") == 0)         *result = JC_INST_OPCODE_ILOAD_1;
-    else if (strcmp(name, "iload_2") == 0)         *result = JC_INST_OPCODE_ILOAD_2;
-    else if (strcmp(name, "iload_3") == 0)         *result = JC_INST_OPCODE_ILOAD_3;
-    else if (strcmp(name, "lload_0") == 0)         *result = JC_INST_OPCODE_LLOAD_0;
-    else if (strcmp(name, "lload_1") == 0)         *result = JC_INST_OPCODE_LLOAD_1;
-    else if (strcmp(name, "lload_2") == 0)         *result = JC_INST_OPCODE_LLOAD_2;
-    else if (strcmp(name, "lload_3") == 0)         *result = JC_INST_OPCODE_LLOAD_3;
-    else if (strcmp(name, "fload_0") == 0)         *result = JC_INST_OPCODE_FLOAD_0;
-    else if (strcmp(name, "fload_1") == 0)         *result = JC_INST_OPCODE_FLOAD_1;
-    else if (strcmp(name, "fload_2") == 0)         *result = JC_INST_OPCODE_FLOAD_2;
-    else if (strcmp(name, "fload_3") == 0)         *result = JC_INST_OPCODE_FLOAD_3;
-    else if (strcmp(name, "dload_0") == 0)         *result = JC_INST_OPCODE_DLOAD_0;
-    else if (strcmp(name, "dload_1") == 0)         *result = JC_INST_OPCODE_DLOAD_1;
-    else if (strcmp(name, "dload_2") == 0)         *result = JC_INST_OPCODE_DLOAD_2;
-    else if (strcmp(name, "dload_3") == 0)         *result = JC_INST_OPCODE_DLOAD_3;
-    else if (strcmp(name, "aload_0") == 0)         *result = JC_INST_OPCODE_ALOAD_0;
-    else if (strcmp(name, "aload_1") == 0)         *result = JC_INST_OPCODE_ALOAD_1;
-    else if (strcmp(name, "aload_2") == 0)         *result = JC_INST_OPCODE_ALOAD_2;
-    else if (strcmp(name, "aload_3") == 0)         *result = JC_INST_OPCODE_ALOAD_3;
-    else if (strcmp(name, "iaload") == 0)          *result = JC_INST_OPCODE_IALOAD;
-    else if (strcmp(name, "laload") == 0)          *result = JC_INST_OPCODE_LALOAD;
-    else if (strcmp(name, "faload") == 0)          *result = JC_INST_OPCODE_FALOAD;
-    else if (strcmp(name, "daload") == 0)          *result = JC_INST_OPCODE_DALOAD;
-    else if (strcmp(name, "aaload") == 0)          *result = JC_INST_OPCODE_AALOAD;
-    else if (strcmp(name, "baload") == 0)          *result = JC_INST_OPCODE_BALOAD;
-    else if (strcmp(name, "caload") == 0)          *result = JC_INST_OPCODE_CALOAD;
-    else if (strcmp(name, "saload") == 0)          *result = JC_INST_OPCODE_SALOAD;
-    else if (strcmp(name, "istore") == 0)          *result = JC_INST_OPCODE_ISTORE;
-    else if (strcmp(name, "lstore") == 0)          *result = JC_INST_OPCODE_LSTORE;
-    else if (strcmp(name, "fstore") == 0)          *result = JC_INST_OPCODE_FSTORE;
-    else if (strcmp(name, "dstore") == 0)          *result = JC_INST_OPCODE_DSTORE;
-    else if (strcmp(name, "astore") == 0)          *result = JC_INST_OPCODE_ASTORE;
-    else if (strcmp(name, "istore_0") == 0)        *result = JC_INST_OPCODE_ISTORE_0;
-    else if (strcmp(name, "istore_1") == 0)        *result = JC_INST_OPCODE_ISTORE_1;
-    else if (strcmp(name, "istore_2") == 0)        *result = JC_INST_OPCODE_ISTORE_2;
-    else if (strcmp(name, "istore_3") == 0)        *result = JC_INST_OPCODE_ISTORE_3;
-    else if (strcmp(name, "lstore_0") == 0)        *result = JC_INST_OPCODE_LSTORE_0;
-    else if (strcmp(name, "lstore_1") == 0)        *result = JC_INST_OPCODE_LSTORE_1;
-    else if (strcmp(name, "lstore_2") == 0)        *result = JC_INST_OPCODE_LSTORE_2;
-    else if (strcmp(name, "lstore_3") == 0)        *result = JC_INST_OPCODE_LSTORE_3;
-    else if (strcmp(name, "fstore_0") == 0)        *result = JC_INST_OPCODE_FSTORE_0;
-    else if (strcmp(name, "fstore_1") == 0)        *result = JC_INST_OPCODE_FSTORE_1;
-    else if (strcmp(name, "fstore_2") == 0)        *result = JC_INST_OPCODE_FSTORE_2;
-    else if (strcmp(name, "fstore_3") == 0)        *result = JC_INST_OPCODE_FSTORE_3;
-    else if (strcmp(name, "dstore_0") == 0)        *result = JC_INST_OPCODE_DSTORE_0;
-    else if (strcmp(name, "dstore_1") == 0)        *result = JC_INST_OPCODE_DSTORE_1;
-    else if (strcmp(name, "dstore_2") == 0)        *result = JC_INST_OPCODE_DSTORE_2;
-    else if (strcmp(name, "dstore_3") == 0)        *result = JC_INST_OPCODE_DSTORE_3;
-    else if (strcmp(name, "astore_0") == 0)        *result = JC_INST_OPCODE_ASTORE_0;
-    else if (strcmp(name, "astore_1") == 0)        *result = JC_INST_OPCODE_ASTORE_1;
-    else if (strcmp(name, "astore_2") == 0)        *result = JC_INST_OPCODE_ASTORE_2;
-    else if (strcmp(name, "astore_3") == 0)        *result = JC_INST_OPCODE_ASTORE_3;
-    else if (strcmp(name, "iastore") == 0)         *result = JC_INST_OPCODE_IASTORE;
-    else if (strcmp(name, "lastore") == 0)         *result = JC_INST_OPCODE_LASTORE;
-    else if (strcmp(name, "fastore") == 0)         *result = JC_INST_OPCODE_FASTORE;
-    else if (strcmp(name, "dastore") == 0)         *result = JC_INST_OPCODE_DASTORE;
-    else if (strcmp(name, "aastore") == 0)         *result = JC_INST_OPCODE_AASTORE;
-    else if (strcmp(name, "bastore") == 0)         *result = JC_INST_OPCODE_BASTORE;
-    else if (strcmp(name, "castore") == 0)         *result = JC_INST_OPCODE_CASTORE;
-    else if (strcmp(name, "sastore") == 0)         *result = JC_INST_OPCODE_SASTORE;
-    else if (strcmp(name, "pop") == 0)             *result = JC_INST_OPCODE_POP;
-    else if (strcmp(name, "pop2") == 0)            *result = JC_INST_OPCODE_POP2;
-    else if (strcmp(name, "dup") == 0)             *result = JC_INST_OPCODE_DUP;
-    else if (strcmp(name, "dup_x1") == 0)          *result = JC_INST_OPCODE_DUP_X1;
-    else if (strcmp(name, "dup_x2") == 0)          *result = JC_INST_OPCODE_DUP_X2;
-    else if (strcmp(name, "dup2") == 0)            *result = JC_INST_OPCODE_DUP2;
-    else if (strcmp(name, "dup2_x1") == 0)         *result = JC_INST_OPCODE_DUP2_X1;
-    else if (strcmp(name, "dup2_x2") == 0)         *result = JC_INST_OPCODE_DUP2_X2;
-    else if (strcmp(name, "swap") == 0)            *result = JC_INST_OPCODE_SWAP;
-    else if (strcmp(name, "iadd") == 0)            *result = JC_INST_OPCODE_IADD;
-    else if (strcmp(name, "ladd") == 0)            *result = JC_INST_OPCODE_LADD;
-    else if (strcmp(name, "fadd") == 0)            *result = JC_INST_OPCODE_FADD;
-    else if (strcmp(name, "dadd") == 0)            *result = JC_INST_OPCODE_DADD;
-    else if (strcmp(name, "isub") == 0)            *result = JC_INST_OPCODE_ISUB;
-    else if (strcmp(name, "lsub") == 0)            *result = JC_INST_OPCODE_LSUB;
-    else if (strcmp(name, "fsub") == 0)            *result = JC_INST_OPCODE_FSUB;
-    else if (strcmp(name, "dsub") == 0)            *result = JC_INST_OPCODE_DSUB;
-    else if (strcmp(name, "imul") == 0)            *result = JC_INST_OPCODE_IMUL;
-    else if (strcmp(name, "lmul") == 0)            *result = JC_INST_OPCODE_LMUL;
-    else if (strcmp(name, "fmul") == 0)            *result = JC_INST_OPCODE_FMUL;
-    else if (strcmp(name, "dmul") == 0)            *result = JC_INST_OPCODE_DMUL;
-    else if (strcmp(name, "idiv") == 0)            *result = JC_INST_OPCODE_IDIV;
-    else if (strcmp(name, "ldiv") == 0)            *result = JC_INST_OPCODE_LDIV;
-    else if (strcmp(name, "fdiv") == 0)            *result = JC_INST_OPCODE_FDIV;
-    else if (strcmp(name, "ddiv") == 0)            *result = JC_INST_OPCODE_DDIV;
-    else if (strcmp(name, "irem") == 0)            *result = JC_INST_OPCODE_IREM;
-    else if (strcmp(name, "lrem") == 0)            *result = JC_INST_OPCODE_LREM;
-    else if (strcmp(name, "frem") == 0)            *result = JC_INST_OPCODE_FREM;
-    else if (strcmp(name, "drem") == 0)            *result = JC_INST_OPCODE_DREM;
-    else if (strcmp(name, "ineg") == 0)            *result = JC_INST_OPCODE_INEG;
-    else if (strcmp(name, "lneg") == 0)            *result = JC_INST_OPCODE_LNEG;
-    else if (strcmp(name, "fneg") == 0)            *result = JC_INST_OPCODE_FNEG;
-    else if (strcmp(name, "dneg") == 0)            *result = JC_INST_OPCODE_DNEG;
-    else if (strcmp(name, "ishl") == 0)            *result = JC_INST_OPCODE_ISHL;
-    else if (strcmp(name, "lshl") == 0)            *result = JC_INST_OPCODE_LSHL;
-    else if (strcmp(name, "ishr") == 0)            *result = JC_INST_OPCODE_ISHR;
-    else if (strcmp(name, "lshr") == 0)            *result = JC_INST_OPCODE_LSHR;
-    else if (strcmp(name, "iushr") == 0)           *result = JC_INST_OPCODE_IUSHR;
-    else if (strcmp(name, "lushr") == 0)           *result = JC_INST_OPCODE_LUSHR;
-    else if (strcmp(name, "iand") == 0)            *result = JC_INST_OPCODE_IAND;
-    else if (strcmp(name, "land") == 0)            *result = JC_INST_OPCODE_LAND;
-    else if (strcmp(name, "ior") == 0)             *result = JC_INST_OPCODE_IOR;
-    else if (strcmp(name, "lor") == 0)             *result = JC_INST_OPCODE_LOR;
-    else if (strcmp(name, "ixor") == 0)            *result = JC_INST_OPCODE_IXOR;
-    else if (strcmp(name, "lxor") == 0)            *result = JC_INST_OPCODE_LXOR;
-    else if (strcmp(name, "iinc") == 0)            *result = JC_INST_OPCODE_IINC;
-    else if (strcmp(name, "i2l") == 0)             *result = JC_INST_OPCODE_I2L;
-    else if (strcmp(name, "i2f") == 0)             *result = JC_INST_OPCODE_I2F;
-    else if (strcmp(name, "i2d") == 0)             *result = JC_INST_OPCODE_I2D;
-    else if (strcmp(name, "l2i") == 0)             *result = JC_INST_OPCODE_L2I;
-    else if (strcmp(name, "l2f") == 0)             *result = JC_INST_OPCODE_L2F;
-    else if (strcmp(name, "l2d") == 0)             *result = JC_INST_OPCODE_L2D;
-    else if (strcmp(name, "f2i") == 0)             *result = JC_INST_OPCODE_F2I;
-    else if (strcmp(name, "f2l") == 0)             *result = JC_INST_OPCODE_F2L;
-    else if (strcmp(name, "f2d") == 0)             *result = JC_INST_OPCODE_F2D;
-    else if (strcmp(name, "d2i") == 0)             *result = JC_INST_OPCODE_D2I;
-    else if (strcmp(name, "d2l") == 0)             *result = JC_INST_OPCODE_D2L;
-    else if (strcmp(name, "d2f") == 0)             *result = JC_INST_OPCODE_D2F;
-    else if (strcmp(name, "i2b") == 0)             *result = JC_INST_OPCODE_I2B;
-    else if (strcmp(name, "i2c") == 0)             *result = JC_INST_OPCODE_I2C;
-    else if (strcmp(name, "i2s") == 0)             *result = JC_INST_OPCODE_I2S;
-    else if (strcmp(name, "lcmp") == 0)            *result = JC_INST_OPCODE_LCMP;
-    else if (strcmp(name, "fcmpl") == 0)           *result = JC_INST_OPCODE_FCMPL;
-    else if (strcmp(name, "fcmpg") == 0)           *result = JC_INST_OPCODE_FCMPG;
-    else if (strcmp(name, "dcmpl") == 0)           *result = JC_INST_OPCODE_DCMPL;
-    else if (strcmp(name, "dcmpg") == 0)           *result = JC_INST_OPCODE_DCMPG;
-    else if (strcmp(name, "ifeq") == 0)            *result = JC_INST_OPCODE_IFEQ;
-    else if (strcmp(name, "ifne") == 0)            *result = JC_INST_OPCODE_IFNE;
-    else if (strcmp(name, "iflt") == 0)            *result = JC_INST_OPCODE_IFLT;
-    else if (strcmp(name, "ifge") == 0)            *result = JC_INST_OPCODE_IFGE;
-    else if (strcmp(name, "ifgt") == 0)            *result = JC_INST_OPCODE_IFGT;
-    else if (strcmp(name, "ifle") == 0)            *result = JC_INST_OPCODE_IFLE;
-    else if (strcmp(name, "if_icmpeq") == 0)       *result = JC_INST_OPCODE_IF_ICMPEQ;
-    else if (strcmp(name, "if_icmpne") == 0)       *result = JC_INST_OPCODE_IF_ICMPNE;
-    else if (strcmp(name, "if_icmplt") == 0)       *result = JC_INST_OPCODE_IF_ICMPLT;
-    else if (strcmp(name, "if_icmpge") == 0)       *result = JC_INST_OPCODE_IF_ICMPGE;
-    else if (strcmp(name, "if_icmpgt") == 0)       *result = JC_INST_OPCODE_IF_ICMPGT;
-    else if (strcmp(name, "if_icmple") == 0)       *result = JC_INST_OPCODE_IF_ICMPLE;
-    else if (strcmp(name, "if_acmpeq") == 0)       *result = JC_INST_OPCODE_IF_ACMPEQ;
-    else if (strcmp(name, "if_acmpne") == 0)       *result = JC_INST_OPCODE_IF_ACMPNE;
-    else if (strcmp(name, "goto") == 0)            *result = JC_INST_OPCODE_GOTO;
-    else if (strcmp(name, "jsr") == 0)             *result = JC_INST_OPCODE_JSR;
-    else if (strcmp(name, "ret") == 0)             *result = JC_INST_OPCODE_RET;
-    else if (strcmp(name, "tableswitch") == 0)     *result = JC_INST_OPCODE_TABLESWITCH;
-    else if (strcmp(name, "lookupswitch") == 0)    *result = JC_INST_OPCODE_LOOKUPSWITCH;
-    else if (strcmp(name, "ireturn") == 0)         *result = JC_INST_OPCODE_IRETURN;
-    else if (strcmp(name, "lreturn") == 0)         *result = JC_INST_OPCODE_LRETURN;
-    else if (strcmp(name, "freturn") == 0)         *result = JC_INST_OPCODE_FRETURN;
-    else if (strcmp(name, "dreturn") == 0)         *result = JC_INST_OPCODE_DRETURN;
-    else if (strcmp(name, "areturn") == 0)         *result = JC_INST_OPCODE_ARETURN;
-    else if (strcmp(name, "return") == 0)          *result = JC_INST_OPCODE_RETURN;
-    else if (strcmp(name, "getstatic") == 0)       *result = JC_INST_OPCODE_GETSTATIC;
-    else if (strcmp(name, "putstatic") == 0)       *result = JC_INST_OPCODE_PUTSTATIC;
-    else if (strcmp(name, "getfield") == 0)        *result = JC_INST_OPCODE_GETFIELD;
-    else if (strcmp(name, "putfield") == 0)        *result = JC_INST_OPCODE_PUTFIELD;
-    else if (strcmp(name, "invokevirtual") == 0)   *result = JC_INST_OPCODE_INVOKEVIRTUAL;
-    else if (strcmp(name, "invokespecial") == 0)   *result = JC_INST_OPCODE_INVOKESPECIAL;
-    else if (strcmp(name, "invokestatic") == 0)    *result = JC_INST_OPCODE_INVOKESTATIC;
-    else if (strcmp(name, "invokeinterface") == 0) *result = JC_INST_OPCODE_INVOKEINTERFACE;
-    else if (strcmp(name, "invokedynamic") == 0)   *result = JC_INST_OPCODE_INVOKEDYNAMIC;
-    else if (strcmp(name, "new") == 0)             *result = JC_INST_OPCODE_NEW;
-    else if (strcmp(name, "newarray") == 0)        *result = JC_INST_OPCODE_NEWARRAY;
-    else if (strcmp(name, "anewarray") == 0)       *result = JC_INST_OPCODE_ANEWARRAY;
-    else if (strcmp(name, "arraylength") == 0)     *result = JC_INST_OPCODE_ARRAYLENGTH;
-    else if (strcmp(name, "athrow") == 0)          *result = JC_INST_OPCODE_ATHROW;
-    else if (strcmp(name, "checkcast") == 0)       *result = JC_INST_OPCODE_CHECKCAST;
-    else if (strcmp(name, "instanceof") == 0)      *result = JC_INST_OPCODE_INSTANCEOF;
-    else if (strcmp(name, "monitorenter") == 0)    *result = JC_INST_OPCODE_MONITORENTER;
-    else if (strcmp(name, "monitorexit") == 0)     *result = JC_INST_OPCODE_MONITOREXIT;
-    else if (strcmp(name, "wide") == 0)            *result = JC_INST_OPCODE_WIDE;
-    else if (strcmp(name, "multianewarray") == 0)  *result = JC_INST_OPCODE_MULTIANEWARRAY;
-    else if (strcmp(name, "ifnull") == 0)          *result = JC_INST_OPCODE_IFNULL;
-    else if (strcmp(name, "ifnonnull") == 0)       *result = JC_INST_OPCODE_IFNONNULL;
-    else if (strcmp(name, "goto_w") == 0)          *result = JC_INST_OPCODE_GOTO_W;
-    else if (strcmp(name, "jsr_w") == 0)           *result = JC_INST_OPCODE_JSR_W;
-    else {
+    if (!lexer_expect_token(lexer, CLEX_dqstring)) return false;
+
+    stb_lex_location loc;
+    String_View ref = lexer_token_sv(*lexer);
+
+    // Class
+    String_View class = sv_chop_by_delim(&ref, '.');
+    if (class.count == 0) {
+        stb_c_lexer_get_location(lexer, class.data, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Reference class name must not be empty\n", LOC_Arg(loc));
+        return false;
+    }
+    if (class.data[class.count] != '.') {
+        stb_c_lexer_get_location(lexer, class.data + class.count, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Reference class name must end with '.'\n", LOC_Arg(loc));
         return false;
     }
 
+    // Reference name
+    String_View name = sv_chop_by_delim(&ref, ':');
+    if (name.count == 0) {
+        stb_c_lexer_get_location(lexer, name.data, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Reference name must not be empty\n", LOC_Arg(loc));
+        return false;
+    }
+    if (name.data[name.count] != ':') {
+        stb_c_lexer_get_location(lexer, name.data + name.count, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Reference name must end with ':'\n", LOC_Arg(loc));
+        return false;
+    }
+
+    // Descriptor
+    if (ref.count == 0) {
+        stb_c_lexer_get_location(lexer, ref.data, &loc);
+        fprintf(stderr, "ERROR:"LOC_Fmt": Reference descriptor must not be empty\n", LOC_Arg(loc));
+        return false;
+    }
+
+    *res_class = class;
+    *res_name = name;
+    *res_descriptor = ref;
+
     return true;
+}
+
+bool lexer_expect_int(stb_lexer *lexer)
+{
+    stb_c_lexer_get_token(lexer);
+    switch (lexer->token) {
+        case '-':
+            lexer_expect_token(lexer, CLEX_intlit);
+            lexer->int_number = -lexer->int_number;
+            return true;
+
+        case CLEX_intlit:
+            return true;
+
+        default:
+            report_unexpected_token(*lexer);
+            return false;
+    }
+}
+
+bool parse_instruction(stb_lexer *lexer, String_View opcode, JcClass *jc, JcInstOpcode *res_opcode, Operands *res_operands)
+{
+    stb_lex_location loc;
+    JcInstOperand operand;
+    String_View ref_class, ref_name, ref_descriptor;
+    for (size_t i = 0; i < ARRAY_LEN(instructions); i++) {
+        Instruction inst = instructions[i];
+        if (sv_eq(opcode, inst.opcode_name)) {
+            *res_opcode = inst.opcode;
+            for (size_t j = 0; j < inst.operand_type_count; j++) {
+                switch (inst.operand_types[j]) {
+                case OPERAND_TYPE_FIELD_REF: {
+                    if (!lexer_expect_ref(lexer, &ref_class, &ref_name, &ref_descriptor)) return false;
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    operand.as_u16 = jc_cp_push_ref(jc, JC_CONSTANT_TAG_FIELD_REF, ref_class, ref_name, ref_descriptor);
+                } break;
+
+                case OPERAND_TYPE_METHOD_REF: {
+                    if (!lexer_expect_ref(lexer, &ref_class, &ref_name, &ref_descriptor)) return false;
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    operand.as_u16 = jc_cp_push_ref(jc, JC_CONSTANT_TAG_METHOD_REF, ref_class, ref_name, ref_descriptor);
+                } break;
+
+                case OPERAND_TYPE_U8: {
+                    if (!lexer_expect_int(lexer)) return false;
+                    if (!(0 <= lexer->int_number && lexer->int_number <= 255)) {
+                        stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                        fprintf(stderr, "ERROR:"LOC_Fmt": Unsigned byte was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
+                        return false;
+                    }
+
+                    operand.tag = JC_INST_OPERAND_TAG_U8;
+                    operand.as_u8 = lexer->int_number;
+                } break;
+
+                case OPERAND_TYPE_I8: {
+                    if (!lexer_expect_int(lexer)) return false;
+                    if (!(-128 <= lexer->int_number && lexer->int_number <= 127)) {
+                        stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                        fprintf(stderr, "ERROR:"LOC_Fmt": Signed byte was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
+                        return false;
+                    }
+
+                    operand.tag = JC_INST_OPERAND_TAG_U8;
+                    operand.as_u8 = lexer->int_number;
+                } break;
+
+                case OPERAND_TYPE_U16: {
+                    if (!lexer_expect_int(lexer)) return false;
+                    if (!(-32768 <= lexer->int_number && lexer->int_number <= 32767)) {
+                        stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                        fprintf(stderr, "ERROR:"LOC_Fmt": Signed short was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
+                        return false;
+                    }
+
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    operand.as_u16 = lexer->int_number;
+                } break;
+
+                case OPERAND_TYPE_CLASS: {
+                    if (!lexer_expect_token(lexer, CLEX_dqstring)) return false;
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    operand.as_u16 = jc_cp_push_class(jc, lexer_token_sv(*lexer));
+                } break;
+
+                default:
+                    UNREACHABLE("parse_instruction");
+                }
+
+                da_append(res_operands, operand);
+            }
+
+            return true;
+        }
+    }
+
+    stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+    fprintf(stderr, "ERROR:"LOC_Fmt": Unknown instruction opcode '"SV_Fmt"'\n", LOC_Arg(loc), SV_Arg(opcode));
+    return false;
 }
 
 #define STACK_SIZE 10
@@ -486,22 +591,19 @@ int main(int argc, char **argv)
         method->access_flags = JC_ACCESS_FLAG_PUBLIC | JC_ACCESS_FLAG_STATIC;
 
         // Parse code
+        Operands inst_operands = {0};
+        JcInstOpcode inst_opcode;
         if (!lexer_expect_token(&lexer, '{')) return 1;
         for (;;) {
             stb_c_lexer_get_token(&lexer);
             if (lexer.token == '}') {
                 break;
             } else if (lexer.token == CLEX_id) {
-                 // TODO: Operands
-                JcInstOpcode opcode;
-                if (opcode_from_name(lexer.string, &opcode)) {
-                    jc_method_push_inst(method, opcode);
-                } else {
-                    stb_lex_location loc;
-                    stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
-                    fprintf(stderr, "ERROR:"LOC_Fmt": Unknown opcode '%s'\n", LOC_Arg(loc), lexer.string);
-                    return 1;
-                }
+                inst_operands.count = 0;
+                String_View opcode = lexer_token_sv(lexer);
+                if (!parse_instruction(&lexer, opcode, &jc, &inst_opcode, &inst_operands)) return 1;
+                nob_log(INFO, "pushing '"SV_Fmt"', %zu operands", SV_Arg(opcode), inst_operands.count);
+                jc_method_push_inst_(method, inst_opcode, inst_operands.items, inst_operands.count);
             } else {
                 report_unexpected_token(lexer);
                 return 1;
