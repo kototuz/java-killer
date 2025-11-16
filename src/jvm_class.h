@@ -57,6 +57,8 @@ typedef struct {
         JcConstantString      as_string;
         JcConstantReference   as_ref;
         JcConstantNameAndType as_name_and_type;
+        uint32_t              as_u32;
+        uint64_t              as_u64;
     };
 } JcConstant;
 
@@ -64,6 +66,9 @@ typedef struct {
     JcConstant *items;
     uint16_t count;
     uint16_t capacity;
+    uint16_t strange_count; // 'long' and 'double' constants take
+                            // 2 entries, so we track the amount
+                            // considering this
 } JcConstantPool;
 
 typedef struct {
@@ -464,6 +469,10 @@ uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View des
 uint16_t jc_cp_push_class(JcClass *jc, String_View class_name);
 uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes);
 uint16_t jc_cp_push_string(JcClass *jc, String_View bytes);
+uint16_t jc_cp_push_integer(JcClass *jc, int32_t n);
+uint16_t jc_cp_push_float(JcClass *jc, float n);
+uint16_t jc_cp_push_long(JcClass *jc, int64_t n);
+uint16_t jc_cp_push_double(JcClass *jc, double n);
 void     jc_cp_dump(JcClass jc);
 
 bool     jc_serialize(JcClass jc, const char *path);

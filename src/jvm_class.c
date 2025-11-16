@@ -431,7 +431,9 @@ uint16_t jc_cp_push_ref(
     };
 
     da_append(&jc->constant_pool, c);
-    return jc->constant_pool.count;
+
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
 }
 
 uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View descriptor)
@@ -445,7 +447,8 @@ uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View des
     };
 
     da_append(&jc->constant_pool, c);
-    return jc->constant_pool.count;
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
 }
 
 uint16_t jc_cp_push_class(JcClass *jc, String_View class_name)
@@ -458,7 +461,8 @@ uint16_t jc_cp_push_class(JcClass *jc, String_View class_name)
     };
 
     da_append(&jc->constant_pool, c);
-    return jc->constant_pool.count;
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
 }
 
 uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes)
@@ -472,7 +476,8 @@ uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes)
     };
 
     da_append(&jc->constant_pool, c);
-    return jc->constant_pool.count;
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
 }
 
 uint16_t jc_cp_push_string(JcClass *jc, String_View bytes)
@@ -483,7 +488,50 @@ uint16_t jc_cp_push_string(JcClass *jc, String_View bytes)
     };
 
     da_append(&jc->constant_pool, c);
-    return jc->constant_pool.count;
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
+}
+
+uint16_t jc_cp_push_integer(JcClass *jc, int32_t n)
+{
+    JcConstant c = {
+        .tag = JC_CONSTANT_TAG_INTEGER,
+        .as_u32 = n,
+    };
+
+    da_append(&jc->constant_pool, c);
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
+}
+
+uint16_t jc_cp_push_float(JcClass *jc, float n)
+{
+    JcConstant c = { .tag = JC_CONSTANT_TAG_FLOAT };
+    memcpy(&c.as_u32, &n, sizeof(float));
+    da_append(&jc->constant_pool, c);
+    jc->constant_pool.strange_count += 1;
+    return jc->constant_pool.strange_count;
+}
+
+uint16_t jc_cp_push_long(JcClass *jc, int64_t n)
+{
+    JcConstant c = {
+        .tag = JC_CONSTANT_TAG_LONG,
+        .as_u64 = n,
+    };
+
+    da_append(&jc->constant_pool, c);
+    jc->constant_pool.strange_count += 2;
+    return jc->constant_pool.strange_count - 1;
+}
+
+uint16_t jc_cp_push_double(JcClass *jc, double n)
+{
+    JcConstant c = { .tag = JC_CONSTANT_TAG_DOUBLE };
+    memcpy(&c.as_u64, &n, sizeof(double));
+    da_append(&jc->constant_pool, c);
+    jc->constant_pool.strange_count += 2;
+    return jc->constant_pool.strange_count - 1;
 }
 
 void jc_cp_dump(JcClass jc)
@@ -525,6 +573,22 @@ void jc_cp_dump(JcClass jc)
             printf("#%-3d STRING               : string_index=%d\n", i+1, c.as_string.string_index);
             break;
 
+        case JC_CONSTANT_TAG_INTEGER:
+            printf("#%-3d INTEGER              : bytes=%d\n", i+1, c.as_u32);
+            break;
+
+        case JC_CONSTANT_TAG_FLOAT:
+            printf("#%-3d FLOAT                : bytes=%f\n", i+1, *(float*)&c.as_u32);
+            break;
+
+        case JC_CONSTANT_TAG_LONG:
+            printf("#%-3d LONG                 : bytes=%ld\n", i+1, (long)c.as_u64);
+            break;
+
+        case JC_CONSTANT_TAG_DOUBLE:
+            printf("#%-3d DOUBLE               : bytes=%f\n", i+1, *(double*)&c.as_u64);
+            break;
+
         default:
             printf("%-3d\n", c.tag);
             UNREACHABLE("Unknown constant tag");
@@ -545,6 +609,17 @@ static void write_u32(FILE *f, uint32_t n)
     write_bytes(f, &((uint8_t*)&n)[1], 1);
     write_bytes(f, &((uint8_t*)&n)[0], 1);
 }
+static void write_u64(FILE *f, uint64_t n)
+{
+    write_bytes(f, &((uint8_t*)&n)[7], 1);
+    write_bytes(f, &((uint8_t*)&n)[6], 1);
+    write_bytes(f, &((uint8_t*)&n)[5], 1);
+    write_bytes(f, &((uint8_t*)&n)[4], 1);
+    write_bytes(f, &((uint8_t*)&n)[3], 1);
+    write_bytes(f, &((uint8_t*)&n)[2], 1);
+    write_bytes(f, &((uint8_t*)&n)[1], 1);
+    write_bytes(f, &((uint8_t*)&n)[0], 1);
+}
 
 bool jc_serialize(JcClass jc, const char *path)
 {
@@ -560,7 +635,7 @@ bool jc_serialize(JcClass jc, const char *path)
     write_u16(output, jc.major_version);
 
     // Constant pool
-    write_u16(output, jc.constant_pool.count + 1);
+    write_u16(output, jc.constant_pool.strange_count + 1);
     da_foreach(JcConstant, c, &jc.constant_pool) {
         write_bytes(output, &c->tag, 1);
         switch (c->tag) {
@@ -587,6 +662,16 @@ bool jc_serialize(JcClass jc, const char *path)
 
         case JC_CONSTANT_TAG_STRING:
             write_u16(output, c->as_string.string_index);
+            break;
+
+        case JC_CONSTANT_TAG_INTEGER:
+        case JC_CONSTANT_TAG_FLOAT:
+            write_u32(output, c->as_u32);
+            break;
+
+        case JC_CONSTANT_TAG_DOUBLE:
+        case JC_CONSTANT_TAG_LONG:
+            write_u64(output, c->as_u64);
             break;
 
         default:
