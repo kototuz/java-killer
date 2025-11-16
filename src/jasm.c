@@ -707,7 +707,6 @@ bool parse_and_compile_inst(
     return false;
 }
 
-#define STACK_SIZE 10
 int main(int argc, char **argv)
 {
     if (argc != 2) {
@@ -727,6 +726,7 @@ int main(int argc, char **argv)
     jc.sourcefile_index = jc_cp_push_utf8(&jc, sv_from_cstr(file_path));
 
     // Parsing method
+    stb_lex_location loc;
     LocalDefs local_defs = {0};
     JmpLabels jmp_labels = {0};
     JmpLabelRefs jmp_label_refs = {0};
@@ -766,8 +766,15 @@ int main(int argc, char **argv)
             }
         }
 
+        if (!lexer_expect_token(&lexer, CLEX_intlit)) return false;
+        if (!(0 <= lexer.int_number && lexer.int_number <= UINT16_MAX)) {
+            stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
+            fprintf(stderr, "ERROR:"LOC_Fmt": Stack size must be u16\n", LOC_Arg(loc));
+            return 1;
+        }
+
         JcMethod *method = jc_method_new(&jc, name, descriptor, local_defs.items, local_defs.count, param_count);
-        method->max_stack = STACK_SIZE;
+        method->max_stack = lexer.int_number;
         method->access_flags = JC_ACCESS_FLAG_PUBLIC | JC_ACCESS_FLAG_STATIC;
 
         // Parse code
@@ -795,7 +802,6 @@ int main(int argc, char **argv)
         da_foreach(JmpLabelRef, label_ref, &jmp_label_refs) {
             JmpLabel label;
             if (!find_label(jmp_labels, label_ref->name,  &label)) {
-                stb_lex_location loc;
                 stb_c_lexer_get_location(&lexer, label_ref->where_firstchar, &loc);
                 fprintf(stderr, "ERROR:"LOC_Fmt" Label '"SV_Fmt"' is undefined\n", LOC_Arg(loc), SV_Arg(label_ref->name));
                 return 1;
@@ -829,5 +835,3 @@ int main(int argc, char **argv)
     jc_serialize(jc, "./Test.class");
     return 0;
 }
-
-// TODO: Ability to define stack size

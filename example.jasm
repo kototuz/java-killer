@@ -1,4 +1,4 @@
-.method main "([Ljava/lang/String;)V" [int]
+.method main "([Ljava/lang/String;)V" [int] 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     aload 0
