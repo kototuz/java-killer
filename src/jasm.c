@@ -52,6 +52,7 @@ typedef struct {
 typedef struct {
     String_View name;
     uint32_t bytecode_offset;
+    char *where_firstchar;
     bool is_u32;
 } JmpLabelRef;
 
@@ -581,10 +582,10 @@ bool parse_and_compile_inst(
                     if (!lexer_expect_token(lexer, CLEX_id)) return false;
                     operand.tag = JC_INST_OPERAND_TAG_U16;
                     operand.as_u16 = 0;
-                    stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
                     da_append(jmp_label_refs, ((JmpLabelRef){
                         .name = lexer_token_sv(*lexer),
                         .bytecode_offset = method->code.count,
+                        .where_firstchar = lexer->where_firstchar,
                     }));
                 } break;
 
@@ -592,10 +593,10 @@ bool parse_and_compile_inst(
                     if (!lexer_expect_token(lexer, CLEX_id)) return false;
                     operand.tag = JC_INST_OPERAND_TAG_U32;
                     operand.as_u32 = 0;
-                    stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
                     da_append(jmp_label_refs, ((JmpLabelRef){
                         .name = lexer_token_sv(*lexer),
                         .bytecode_offset = method->code.count,
+                        .where_firstchar = lexer->where_firstchar,
                         .is_u32 = true,
                     }));
                 } break;
@@ -707,7 +708,9 @@ int main(int argc, char **argv)
         da_foreach(JmpLabelRef, label_ref, &jmp_label_refs) {
             JmpLabel label;
             if (!find_label(jmp_labels, label_ref->name,  &label)) {
-                fprintf(stderr, "ERROR: Label '"SV_Fmt"' is undefined\n", SV_Arg(label_ref->name));
+                stb_lex_location loc;
+                stb_c_lexer_get_location(&lexer, label_ref->where_firstchar, &loc);
+                fprintf(stderr, "ERROR:"LOC_Fmt" Label '"SV_Fmt"' is undefined\n", LOC_Arg(loc), SV_Arg(label_ref->name));
                 return 1;
             }
 
