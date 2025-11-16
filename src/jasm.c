@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <float.h>
 
 #define STB_C_LEXER_IMPLEMENTATION
 #include <stb_c_lexer.h>
@@ -19,10 +20,13 @@ typedef enum {
     OPERAND_TYPE_METHOD_REF,
     OPERAND_TYPE_U8,
     OPERAND_TYPE_I8,
-    OPERAND_TYPE_U16,
+    OPERAND_TYPE_I16,
     OPERAND_TYPE_CLASS,
     OPERAND_TYPE_JMP_LABEL_U16,
     OPERAND_TYPE_JMP_LABEL_U32,
+    OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U8,  // int|float|string
+    OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U16, // int|float|string
+    OPERAND_TYPE_CONSTANT_LONG_DOUBLE,          // long|double
 } OperandType;
 
 typedef struct {
@@ -233,7 +237,7 @@ static const Instruction instructions[] = {
     { .opcode = JC_INST_OPCODE_RETURN,          .opcode_name = SV_STATIC("return") },
     { .opcode = JC_INST_OPCODE_SALOAD,          .opcode_name = SV_STATIC("saload") },
     { .opcode = JC_INST_OPCODE_SASTORE,         .opcode_name = SV_STATIC("sastore") },
-    { .opcode = JC_INST_OPCODE_SIPUSH,          .opcode_name = SV_STATIC("sipush"), OPERAND_TYPES(OPERAND_TYPE_U16) },
+    { .opcode = JC_INST_OPCODE_SIPUSH,          .opcode_name = SV_STATIC("sipush"), OPERAND_TYPES(OPERAND_TYPE_I16) },
     { .opcode = JC_INST_OPCODE_SWAP,            .opcode_name = SV_STATIC("swap") },
     { .opcode = JC_INST_OPCODE_GOTO,            .opcode_name = SV_STATIC("goto"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
     { .opcode = JC_INST_OPCODE_GOTO_W,          .opcode_name = SV_STATIC("goto_w"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U32) },
@@ -253,6 +257,9 @@ static const Instruction instructions[] = {
     { .opcode = JC_INST_OPCODE_IF_ACMPNE,       .opcode_name = SV_STATIC("if_acmpne"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
     { .opcode = JC_INST_OPCODE_IFNULL,          .opcode_name = SV_STATIC("ifnull"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
     { .opcode = JC_INST_OPCODE_IFNONNULL,       .opcode_name = SV_STATIC("ifnonnull"), OPERAND_TYPES(OPERAND_TYPE_JMP_LABEL_U16) },
+    { .opcode = JC_INST_OPCODE_LDC,             .opcode_name = SV_STATIC("ldc"), OPERAND_TYPES(OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U8) },
+    { .opcode = JC_INST_OPCODE_LDC_W,           .opcode_name = SV_STATIC("ldc_w"), OPERAND_TYPES(OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U16) },
+    { .opcode = JC_INST_OPCODE_LDC2_W,          .opcode_name = SV_STATIC("ldc2_w"), OPERAND_TYPES(OPERAND_TYPE_CONSTANT_LONG_DOUBLE) },
 };
 
 static char lexer_storage[1024] = {0};
@@ -538,7 +545,7 @@ bool parse_and_compile_inst(
 
                 case OPERAND_TYPE_U8: {
                     if (!lexer_expect_int(lexer)) return false;
-                    if (!(0 <= lexer->int_number && lexer->int_number <= 255)) {
+                    if (!(0 <= lexer->int_number && lexer->int_number <= UINT8_MAX)) {
                         stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
                         fprintf(stderr, "ERROR:"LOC_Fmt": Unsigned byte was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
                         return false;
@@ -550,7 +557,7 @@ bool parse_and_compile_inst(
 
                 case OPERAND_TYPE_I8: {
                     if (!lexer_expect_int(lexer)) return false;
-                    if (!(-128 <= lexer->int_number && lexer->int_number <= 127)) {
+                    if (!(INT8_MIN <= lexer->int_number && lexer->int_number <= INT8_MAX)) {
                         stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
                         fprintf(stderr, "ERROR:"LOC_Fmt": Signed byte was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
                         return false;
@@ -560,9 +567,9 @@ bool parse_and_compile_inst(
                     operand.as_u8 = lexer->int_number;
                 } break;
 
-                case OPERAND_TYPE_U16: {
+                case OPERAND_TYPE_I16: {
                     if (!lexer_expect_int(lexer)) return false;
-                    if (!(-32768 <= lexer->int_number && lexer->int_number <= 32767)) {
+                    if (!(INT16_MIN <= lexer->int_number && lexer->int_number <= INT16_MAX)) {
                         stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
                         fprintf(stderr, "ERROR:"LOC_Fmt": Signed short was expected, but found '%ld'\n", LOC_Arg(loc), lexer->int_number);
                         return false;
@@ -599,6 +606,85 @@ bool parse_and_compile_inst(
                         .where_firstchar = lexer->where_firstchar,
                         .is_u32 = true,
                     }));
+                } break;
+
+                case OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U8: {
+                    stb_c_lexer_get_token(lexer);
+                    operand.tag = JC_INST_OPERAND_TAG_U8;
+                    if (lexer->token == CLEX_intlit) {
+                        if (!(INT32_MIN <= lexer->int_number && lexer->int_number <= INT32_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 32-bit integer\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u8 = jc_cp_push_integer(jc, lexer->int_number);
+                    } else if (lexer->token == CLEX_floatlit) {
+                        if (!(FLT_MIN <= lexer->real_number && lexer->real_number <= FLT_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 32-bit float\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u8 = jc_cp_push_float(jc, lexer->real_number);
+                    } else if (lexer->token == CLEX_dqstring) {
+                        operand.as_u8 = jc_cp_push_string(jc, lexer_token_sv(*lexer));
+                    } else {
+                        report_unexpected_token(*lexer);
+                        return false;
+                    }
+                } break;
+
+                case OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U16: {
+                    stb_c_lexer_get_token(lexer);
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    if (lexer->token == CLEX_intlit) {
+                        if (!(INT32_MIN <= lexer->int_number && lexer->int_number <= INT32_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 32-bit integer\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u16 = jc_cp_push_integer(jc, lexer->int_number);
+                    } else if (lexer->token == CLEX_floatlit) {
+                        if (!(FLT_MIN <= lexer->real_number && lexer->real_number <= FLT_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 32-bit float\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u16 = jc_cp_push_float(jc, lexer->real_number);
+                    } else if (lexer->token == CLEX_dqstring) {
+                        operand.as_u16 = jc_cp_push_string(jc, lexer_token_sv(*lexer));
+                    } else {
+                        report_unexpected_token(*lexer);
+                        return false;
+                    }
+                } break;
+
+                case OPERAND_TYPE_CONSTANT_LONG_DOUBLE: {
+                    stb_c_lexer_get_token(lexer);
+                    operand.tag = JC_INST_OPERAND_TAG_U16;
+                    if (lexer->token == CLEX_intlit) {
+                        if (!(INT64_MIN <= lexer->int_number && lexer->int_number <= INT64_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 64-bit integer\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u16 = jc_cp_push_long(jc, lexer->int_number);
+                    } else if (lexer->token == CLEX_floatlit) {
+                        if (!(DBL_MIN <= lexer->real_number && lexer->real_number <= DBL_MAX)) {
+                            stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+                            fprintf(stderr, "ERROR:"LOC_Fmt": Number must be 64-bit double\n", LOC_Arg(loc));
+                            return false;
+                        }
+
+                        operand.as_u16 = jc_cp_push_double(jc, lexer->real_number);
+                    } else {
+                        report_unexpected_token(*lexer);
+                        return false;
+                    }
                 } break;
 
                 default:

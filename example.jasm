@@ -33,6 +33,39 @@
     iinc 1 1
     goto_w again
 .break
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc "Hello, world"
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc 10000.57
+    invokevirtual "java/io/PrintStream.println:(F)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc 32000000
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w "Hello, world"
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w 10000.57
+    invokevirtual "java/io/PrintStream.println:(F)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w 32000
+    invokevirtual "java/io/PrintStream.println:(I)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc2_w 9223372036854775807
+    invokevirtual "java/io/PrintStream.println:(J)V"
+
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc2_w 1234123512351256123436234.12334
+    invokevirtual "java/io/PrintStream.println:(D)V"
+
     return
 }
 

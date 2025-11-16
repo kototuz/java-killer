@@ -33,7 +33,7 @@
 
 - [x] `jasm:` Implement branching instructions
 
-- [ ] `jasm:` Implement `ldc*` instructions (load constants)
+- [x] `jasm:` Implement `ldc*` instructions (load constants)
 
 - [ ] `jasm:` Update format for instruction operands (e.g "MyClass.field:I" -> MyClass field I)
 
