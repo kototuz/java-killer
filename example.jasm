@@ -1,4 +1,4 @@
-.method main "([Ljava/lang/String;)V" [int] 32
+method main "([Ljava/lang/String;)V" [int] 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     aload 0
@@ -69,7 +69,7 @@
     return
 }
 
-.method foo "()V" []
+method foo "()V" []
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     sipush 6969

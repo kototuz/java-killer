@@ -722,7 +722,7 @@ int main(int argc, char **argv)
     stb_lexer lexer = {0};
     stb_c_lexer_init(&lexer, sb.items, sb.items + sb.count, lexer_storage, sizeof(lexer_storage));
 
-    JcClass jc = jc_new("test");
+    JcClass jc = jc_new(SV_STATIC("test"));
 
     // Parsing method
     stb_lex_location loc;
@@ -733,11 +733,6 @@ int main(int argc, char **argv)
         local_defs.count = 0;
         jmp_labels.count = 0;
         jmp_label_refs.count = 0;
-
-        if (lexer.token != '.') {
-            report_unexpected_token(lexer);
-            return 1;
-        }
 
         lexer_expect_keyword(&lexer, "method");
 
