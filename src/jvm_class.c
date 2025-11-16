@@ -6,8 +6,7 @@
 #define write_bytes(file, ptr, size) (assert(fwrite(ptr, 1, size, file) == size))
 
 #define CODE_ATTR_NAME_IDX            1
-#define SOURCEFILE_ATTR_NAME_IDX      2
-#define STACK_MAP_TABLE_ATTR_NAME_IDX 3
+#define STACK_MAP_TABLE_ATTR_NAME_IDX 2
 
 static const char *inst_opcode_name[] = {
     [JC_INST_OPCODE_NOP]             = "nop",
@@ -222,7 +221,6 @@ JcClass jc_new(const char *name)
 
     // Push attribute names now to reuse it later
     jc_cp_push_utf8(&c, SV_STATIC("Code"));
-    jc_cp_push_utf8(&c, SV_STATIC("SourceFile"));
     jc_cp_push_utf8(&c, SV_STATIC("StackMapTable"));
 
     c.this_class = jc_cp_push_class(&c, sv_from_cstr(name));
@@ -720,11 +718,8 @@ bool jc_serialize(JcClass jc, const char *path)
         write_bytes(output, m->stack_map_frames.bytes.items, m->stack_map_frames.bytes.count);
     }
 
-    // Class file attributes. ONLY SOURCE FILE NAME NOW
-    write_u16(output, 1);
-    write_u16(output, SOURCEFILE_ATTR_NAME_IDX);
-    write_u32(output, 2);
-    write_u16(output, jc.sourcefile_index);
+    // Class file attributes
+    write_u16(output, 0);
 
     fclose(output);
     return true;

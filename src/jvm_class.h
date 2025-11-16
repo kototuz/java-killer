@@ -439,7 +439,6 @@ typedef struct {
     uint16_t       super_class;
     JcInterfaces   interfaces;
     JcMethods      methods;
-    uint16_t       sourcefile_index; // TODO: Maybe we should not care about source file
 } JcClass;
 
 

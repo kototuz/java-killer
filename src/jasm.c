@@ -695,7 +695,7 @@ bool parse_and_compile_inst(
                 da_append(&operand_buf, operand);
             }
 
-            nob_log(INFO, "pushing '"SV_Fmt"', %zu operands", SV_Arg(opcode), operand_buf.count);
+            // nob_log(INFO, "pushing '"SV_Fmt"', %zu operands", SV_Arg(opcode), operand_buf.count);
             jc_method_push_inst_(method, inst.opcode, operand_buf.items, operand_buf.count);
 
             return true;
@@ -722,8 +722,7 @@ int main(int argc, char **argv)
     stb_lexer lexer = {0};
     stb_c_lexer_init(&lexer, sb.items, sb.items + sb.count, lexer_storage, sizeof(lexer_storage));
 
-    JcClass jc = jc_new("Test");
-    jc.sourcefile_index = jc_cp_push_utf8(&jc, sv_from_cstr(file_path));
+    JcClass jc = jc_new("test");
 
     // Parsing method
     stb_lex_location loc;
@@ -832,6 +831,6 @@ int main(int argc, char **argv)
         }
     }
 
-    jc_serialize(jc, "./Test.class");
+    jc_serialize(jc, "./test.class");
     return 0;
 }
