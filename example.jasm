@@ -1,3 +1,5 @@
+class Program
+
 method main "([Ljava/lang/String;)V" [int] 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
@@ -69,7 +71,7 @@ method main "([Ljava/lang/String;)V" [int] 32
     return
 }
 
-method foo "()V" []
+method foo "()V" [] 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     sipush 6969

@@ -215,7 +215,7 @@ static const char *inst_opcode_name[] = {
 
 
 
-JcClass jc_new(const char *name)
+JcClass jc_new(String_View class_name)
 {
     JcClass c = {0};
 
@@ -223,7 +223,7 @@ JcClass jc_new(const char *name)
     jc_cp_push_utf8(&c, SV_STATIC("Code"));
     jc_cp_push_utf8(&c, SV_STATIC("StackMapTable"));
 
-    c.this_class = jc_cp_push_class(&c, sv_from_cstr(name));
+    c.this_class = jc_cp_push_class(&c, class_name);
 
     // Default parameters for convenience
     c.super_class = jc_cp_push_class(&c, SV_STATIC("java/lang/Object"));

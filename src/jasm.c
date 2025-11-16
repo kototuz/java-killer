@@ -327,7 +327,16 @@ bool lexer_expect_keyword(stb_lexer *lexer, const char *keyword)
 {
     if (!lexer_expect_token(lexer, CLEX_id)) return false;
     if (strcmp(lexer->string, keyword) != 0) {
-        fprintf(stderr, "ERROR: Keyword '%s' was expected buf found '%s'\n", keyword, lexer_token_id_string(lexer->token));
+        stb_lex_location loc;
+        stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
+        fprintf(
+            stderr,
+            "ERROR:"LOC_Fmt": Keyword '%s' was expected buf found '%s'\n",
+            LOC_Arg(loc),
+            keyword,
+            lexer_token_id_string(lexer->token)
+        );
+
         return false;
     }
 
@@ -722,7 +731,9 @@ int main(int argc, char **argv)
     stb_lexer lexer = {0};
     stb_c_lexer_init(&lexer, sb.items, sb.items + sb.count, lexer_storage, sizeof(lexer_storage));
 
-    JcClass jc = jc_new(SV_STATIC("test"));
+    if (!lexer_expect_keyword(&lexer, "class")) return 1;
+    if (!lexer_expect_token(&lexer, CLEX_dqstring)) return 1;
+    JcClass jc = jc_new(lexer_token_sv(lexer));
 
     // Parsing method
     stb_lex_location loc;
@@ -734,7 +745,10 @@ int main(int argc, char **argv)
         jmp_labels.count = 0;
         jmp_label_refs.count = 0;
 
-        lexer_expect_keyword(&lexer, "method");
+        if (strcmp(lexer.string, "method") != 0) {
+            report_unexpected_token(lexer);
+            return 1;
+        }
 
         if (!lexer_expect_token(&lexer, CLEX_id)) return 1;
         String_View name = lexer_token_sv(lexer);

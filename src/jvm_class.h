@@ -443,7 +443,7 @@ typedef struct {
 
 
 
-JcClass  jc_new(const char *name);
+JcClass  jc_new(String_View class_name);
 
 JcMethod *jc_method_new(JcClass *jc, String_View name, String_View descriptor, JcLocalDef *local_defs, uint16_t local_def_count, uint16_t arg_count);
 
