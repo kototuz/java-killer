@@ -379,6 +379,7 @@ bool parse_field_descriptors(stb_lexer *lexer, String_View descriptors, LocalDef
                 return false;
             }
 
+            sv_chop_left(&class_name, 1);
             da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = class_name }));
         } break;
 
