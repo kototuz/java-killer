@@ -1,4 +1,4 @@
-class Program
+class "com/kototuz/test/Program"
 
 method main "([Ljava/lang/String;)V" [int] 32
 {
@@ -21,7 +21,7 @@ method main "([Ljava/lang/String;)V" [int] 32
     arraylength
     invokevirtual "java/io/PrintStream.println:(I)V"
 
-    invokestatic "Test.foo:()V"
+    invokestatic "com/kototuz/test/Program.foo:()V"
 
     iconst_0
     istore_1

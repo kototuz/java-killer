@@ -716,24 +716,52 @@ bool parse_and_compile_inst(
     return false;
 }
 
+bool create_class_dirs(String_View class_name, const char *output_dir)
+{
+    String_View dir = class_name;
+    dir.count = 0;
+    for (;;) {
+        sv_chop_by_delim(&class_name, '/');
+        if (class_name.data[-1] != '/') break;
+        dir.count = class_name.data - dir.data;
+        char *full_path = temp_sprintf("%s/"SV_Fmt, output_dir, SV_Arg(dir));
+        int err = mkdir(full_path, 0755);
+        if (err < 0 && errno != EEXIST) {
+            fprintf(stderr, "ERROR: Could not create directory '%s': %s\n", full_path, strerror(errno));
+            return false;
+        }
+    }
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: %s <source_file.jasm>\n", argv[0]);
+    char *program_name = shift_args(&argc, &argv);
+
+    const char *input_path;
+    const char *output_dir;
+    if (argc == 1) {
+        input_path = shift_args(&argc, &argv);
+        output_dir = ".";
+    } else if (argc == 2) {
+        input_path = shift_args(&argc, &argv);
+        output_dir = shift_args(&argc, &argv);
+    } else {
+        fprintf(stderr, "Usage: %s <source_file.jasm> [<output-dir>]\n", program_name);
         return 1;
     }
 
-    const char *file_path = argv[1];
-
     String_Builder sb = {0};
-    if (!read_entire_file(file_path, &sb)) return 1;
+    if (!read_entire_file(input_path, &sb)) return 1;
 
     stb_lexer lexer = {0};
     stb_c_lexer_init(&lexer, sb.items, sb.items + sb.count, lexer_storage, sizeof(lexer_storage));
 
     if (!lexer_expect_keyword(&lexer, "class")) return 1;
     if (!lexer_expect_token(&lexer, CLEX_dqstring)) return 1;
-    JcClass jc = jc_new(lexer_token_sv(lexer));
+    String_View class_name = lexer_token_sv(lexer);
+    JcClass jc = jc_new(class_name);
 
     // Parsing method
     stb_lex_location loc;
@@ -840,6 +868,9 @@ int main(int argc, char **argv)
         }
     }
 
-    jc_serialize(jc, "./test.class");
+    if (!create_class_dirs(class_name, output_dir)) return 1;
+    char *output_file_path = temp_sprintf("%s/"SV_Fmt".class", output_dir, SV_Arg(class_name));
+    jc_serialize(jc, output_file_path);
+
     return 0;
 }
