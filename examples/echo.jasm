@@ -1,0 +1,39 @@
+class "Program"
+
+method main "([Ljava/lang/String;)V" [int] 32
+{
+    iconst_0
+    istore_1
+
+.loop
+    iload_1
+    aload_0
+    arraylength
+    if_icmpeq break
+
+    // Print space after each argument but first
+    iload_1
+    ifeq end
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w " "
+    invokevirtual "java/io/PrintStream.print:(Ljava/lang/String;)V"
+.end
+
+    // Print argument
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    aload_0
+    iload_1
+    aaload
+    invokevirtual "java/io/PrintStream.print:(Ljava/lang/String;)V"
+
+    iinc 1 1
+    goto loop
+
+.break
+    // New line
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    bipush 10
+    invokevirtual "java/io/PrintStream.write:(I)V"
+
+    return
+}

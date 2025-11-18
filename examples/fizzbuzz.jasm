@@ -1,0 +1,76 @@
+class "Program"
+
+method main "([Ljava/lang/String;)V" [int int int] 32
+{
+    iconst_1
+    istore_1
+
+.loop
+    iload_1
+    bipush 100
+    if_icmpgt break
+
+    // is it Fizz?
+    iload_1
+    iconst_3
+    irem
+    ifne else
+    iconst_1
+    istore_2
+    goto final
+.else
+    iconst_0
+    istore_2
+.final
+
+    // is it Bazz?
+    iload_1
+    iconst_5
+    irem
+    ifne else2
+    iconst_1
+    istore_3
+    goto final2
+.else2
+    iconst_0
+    istore_3
+.final2
+
+    iload_2
+    iload_3
+    iand
+    ifeq else3
+    // if it is Fizz and Bazz
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w "FizzBuzz"
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
+    goto final3
+.else3
+    iload_2
+    ifeq else4
+    // if it is only Fizz
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w "Fizz"
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
+    goto final3
+.else4
+    iload_3
+    ifeq else5
+    // if it is only Bazz
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    ldc_w "Bazz"
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
+    goto final3
+.else5
+    // if none of them
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    iload_1
+    invokevirtual "java/io/PrintStream.println:(I)V"
+.final3
+
+    iinc 1 1
+    goto loop
+
+.break
+    return
+}

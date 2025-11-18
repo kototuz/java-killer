@@ -1,4 +1,4 @@
-class "com/kototuz/test/Program"
+class "Program"
 
 method main "([Ljava/lang/String;)V" [int] 32
 {
@@ -21,7 +21,7 @@ method main "([Ljava/lang/String;)V" [int] 32
     arraylength
     invokevirtual "java/io/PrintStream.println:(I)V"
 
-    invokestatic "com/kototuz/test/Program.foo:()V"
+    invokestatic "Program.foo:()V"
 
     iconst_0
     istore_1
@@ -35,6 +35,9 @@ method main "([Ljava/lang/String;)V" [int] 32
     iinc 1 1
     goto_w again
 .break
+
+    ldc "Foo Baz Bar!!!"
+    invokestatic "Program.say:(Ljava/lang/String;)V"
 
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     ldc "Hello, world"
@@ -68,6 +71,14 @@ method main "([Ljava/lang/String;)V" [int] 32
     ldc2_w 1234123512351256123436234.12334
     invokevirtual "java/io/PrintStream.println:(D)V"
 
+    return
+}
+
+method say "(Ljava/lang/String;)V" [] 32
+{
+    getstatic "java/lang/System.out:Ljava/io/PrintStream;"
+    aload_0
+    invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
     return
 }
 

@@ -864,6 +864,8 @@ int main(int argc, char **argv)
         }
 
         da_foreach(JmpLabel, label, &jmp_labels) {
+            // TODO: If 2 labels point to the same instruction program crashes.
+            // So i think we should check that case
             jc_method_push_frame(method, label->bytecode_offset);
         }
     }
@@ -874,3 +876,5 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+// TODO: Allow declare remain local types (float, long, double etc.)
