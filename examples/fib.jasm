@@ -1,4 +1,4 @@
-class "Program"
+class "Fib"
 
 method main "([Ljava/lang/String;)V" [int int int] 32
 {

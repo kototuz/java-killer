@@ -12,3 +12,9 @@ without boolshit using godly **C Programming Language**.
 ## Toolchains
 
 - **jasm** - an assembler
+
+## Build
+
+```console
+$ cc -o nob nob.c && ./nob
+```

@@ -1,4 +1,4 @@
-class "Program"
+class "FizzBuzz"
 
 method main "([Ljava/lang/String;)V" [int int int] 32
 {
@@ -23,7 +23,7 @@ method main "([Ljava/lang/String;)V" [int int int] 32
     istore_2
 .final
 
-    // is it Bazz?
+    // is it Buzz?
     iload_1
     iconst_5
     irem
@@ -40,7 +40,7 @@ method main "([Ljava/lang/String;)V" [int int int] 32
     iload_3
     iand
     ifeq else3
-    // if it is Fizz and Bazz
+    // if it is Fizz and Buzz
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     ldc_w "FizzBuzz"
     invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
@@ -56,9 +56,9 @@ method main "([Ljava/lang/String;)V" [int int int] 32
 .else4
     iload_3
     ifeq else5
-    // if it is only Bazz
+    // if it is only Buzz
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
-    ldc_w "Bazz"
+    ldc_w "Buzz"
     invokevirtual "java/io/PrintStream.println:(Ljava/lang/String;)V"
     goto final3
 .else5

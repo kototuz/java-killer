@@ -1,4 +1,4 @@
-class "Program"
+class "Echo"
 
 method main "([Ljava/lang/String;)V" [int] 32
 {
