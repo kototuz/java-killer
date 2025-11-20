@@ -1,0 +1,15 @@
+class "LongsAndDoublesNuance"
+
+method main "([Ljava/lang/String;)V" "DJD" 32
+{
+    ldc2_w 1000000.123
+    dstore_1
+
+    ldc2_w 2000000000
+    lstore_3 // longs and doubles take 2 indices be carefull about that
+
+    dconst_1
+    dstore 5 // 3 + 2
+
+    return
+}

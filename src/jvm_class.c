@@ -73,7 +73,14 @@ JcMethod *jc_method_new(
         for (uint16_t i = 0; i < local_def_count; i++) {
             switch (local_defs[i].type) {
             case JC_LOCAL_TYPE_INT:
-                da_append(&m.stack_map_frames.bytes, 1); // push integer type
+            case JC_LOCAL_TYPE_FLOAT:
+                da_append(&m.stack_map_frames.bytes, local_defs[i].type);
+                break;
+
+            case JC_LOCAL_TYPE_DOUBLE:
+            case JC_LOCAL_TYPE_LONG:
+                da_append(&m.stack_map_frames.bytes, local_defs[i].type);
+                m.max_locals += 1;
                 break;
 
             case JC_LOCAL_TYPE_OBJECT:
@@ -93,16 +100,37 @@ JcMethod *jc_method_new(
         da_append(&m.stack_map_frames.bytes, 0);
 
         // Initialize all local variables but arguments
+        uint8_t local_index = arg_count;
         for (uint16_t i = arg_count; i < local_def_count; i++) {
             switch (local_defs[i].type) {
             case JC_LOCAL_TYPE_INT:
                 jc_method_push_inst(&m, JC_INST_OPCODE_ICONST_0);
-                jc_method_push_inst(&m, JC_INST_OPCODE_ISTORE, JC_OPERAND_U8(i));
+                jc_method_push_inst(&m, JC_INST_OPCODE_ISTORE, JC_OPERAND_U8(local_index));
+                local_index += 1;
+                break;
+
+            case JC_LOCAL_TYPE_FLOAT:
+                jc_method_push_inst(&m, JC_INST_OPCODE_FCONST_0);
+                jc_method_push_inst(&m, JC_INST_OPCODE_FSTORE, JC_OPERAND_U8(local_index));
+                local_index += 1;
+                break;
+
+            case JC_LOCAL_TYPE_DOUBLE:
+                jc_method_push_inst(&m, JC_INST_OPCODE_DCONST_0);
+                jc_method_push_inst(&m, JC_INST_OPCODE_DSTORE, JC_OPERAND_U8(local_index));
+                local_index += 2;
+                break;
+
+            case JC_LOCAL_TYPE_LONG:
+                jc_method_push_inst(&m, JC_INST_OPCODE_LCONST_0);
+                jc_method_push_inst(&m, JC_INST_OPCODE_LSTORE, JC_OPERAND_U8(local_index));
+                local_index += 2;
                 break;
 
             case JC_LOCAL_TYPE_OBJECT:
                 jc_method_push_inst(&m, JC_INST_OPCODE_ACONST_NULL);
-                jc_method_push_inst(&m, JC_INST_OPCODE_ASTORE, JC_OPERAND_U8(i));
+                jc_method_push_inst(&m, JC_INST_OPCODE_ASTORE, JC_OPERAND_U8(local_index));
+                local_index += 1;
                 break;
 
             default:

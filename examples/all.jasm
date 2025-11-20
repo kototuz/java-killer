@@ -1,6 +1,7 @@
 class "All"
 
-method main "([Ljava/lang/String;)V" [int] 32
+// method <name> <descriptor> <locals> <max-stack>
+method main "([Ljava/lang/String;)V" "I" 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     aload 0
@@ -21,7 +22,7 @@ method main "([Ljava/lang/String;)V" [int] 32
     arraylength
     invokevirtual "java/io/PrintStream.println:(I)V"
 
-    invokestatic "Program.foo:()V"
+    invokestatic "All.foo:()V"
 
     iconst_0
     istore_1
@@ -37,7 +38,7 @@ method main "([Ljava/lang/String;)V" [int] 32
 .break
 
     ldc "Foo Baz Bar!!!"
-    invokestatic "Program.say:(Ljava/lang/String;)V"
+    invokestatic "All.say:(Ljava/lang/String;)V"
 
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     ldc "Hello, world"
@@ -74,7 +75,7 @@ method main "([Ljava/lang/String;)V" [int] 32
     return
 }
 
-method say "(Ljava/lang/String;)V" [] 32
+method say "(Ljava/lang/String;)V" 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     aload_0
@@ -82,7 +83,7 @@ method say "(Ljava/lang/String;)V" [] 32
     return
 }
 
-method foo "()V" [] 32
+method foo "()V" 32
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     sipush 6969

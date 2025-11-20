@@ -363,8 +363,27 @@ bool parse_field_descriptors(stb_lexer *lexer, String_View descriptors, LocalDef
             sv_chop_left(&descriptors, 1);
         } break;
 
+        case 'B':
+        case 'C':
+        case 'S':
+        case 'Z':
         case 'I': {
             da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
+            sv_chop_left(&descriptors, 1);
+        } break;
+
+        case 'F': {
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_FLOAT }));
+            sv_chop_left(&descriptors, 1);
+        } break;
+
+        case 'D': {
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_DOUBLE }));
+            sv_chop_left(&descriptors, 1);
+        } break;
+
+        case 'J': {
+            da_append(result, ((JcLocalDef){ .type = JC_LOCAL_TYPE_LONG }));
             sv_chop_left(&descriptors, 1);
         } break;
 
@@ -394,7 +413,7 @@ bool parse_field_descriptors(stb_lexer *lexer, String_View descriptors, LocalDef
 
         default:
             stb_c_lexer_get_location(lexer, descriptors.data, &loc);
-            fprintf(stderr, "ERROR:"LOC_Fmt": Unknown field descriptor\n", LOC_Arg(loc));
+            fprintf(stderr, "ERROR:"LOC_Fmt": Unknown field descriptor '%c'\n", LOC_Arg(loc), descriptors.data[0]);
             return false;
         }
     }
@@ -785,27 +804,23 @@ int main(int argc, char **argv)
 
         uint16_t param_count = local_defs.count;
 
-        // Parse local variable definitions
-        if (!lexer_expect_token(&lexer, '[')) return 1;
-        for (;;) {
-            stb_c_lexer_get_token(&lexer);
-            if (lexer.token == ']') {
-                break;
-            } else if (lexer.token == CLEX_id && strcmp(lexer.string, "int") == 0) {
-                da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_INT }));
-            } else if (lexer.token == CLEX_dqstring) {
-                // TODO: Check format
-                da_append(&local_defs, ((JcLocalDef){ .type = JC_LOCAL_TYPE_OBJECT, .as_object = lexer_token_sv(lexer) }));
-            } else {
-                report_unexpected_token(lexer);
+        stb_c_lexer_get_token(&lexer);
+        switch (lexer.token) {
+        case CLEX_dqstring:
+            // Parse optional local variable definitions
+            if (!parse_field_descriptors(&lexer, lexer_token_sv(lexer), &local_defs)) return 1;
+            if (!lexer_expect_token(&lexer, CLEX_intlit)) return 1;
+        case CLEX_intlit:
+            // Parse max stack size
+            if (!(0 <= lexer.int_number && lexer.int_number <= UINT16_MAX)) {
+                stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
+                fprintf(stderr, "ERROR:"LOC_Fmt": Stack size must be u16\n", LOC_Arg(loc));
                 return 1;
             }
-        }
+            break;
 
-        if (!lexer_expect_token(&lexer, CLEX_intlit)) return false;
-        if (!(0 <= lexer.int_number && lexer.int_number <= UINT16_MAX)) {
-            stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
-            fprintf(stderr, "ERROR:"LOC_Fmt": Stack size must be u16\n", LOC_Arg(loc));
+        default:
+            report_unexpected_token(lexer);
             return 1;
         }
 
@@ -877,4 +892,4 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// TODO: Allow declare remain local types (float, long, double etc.)
+// TODO: Maybe default stack size?

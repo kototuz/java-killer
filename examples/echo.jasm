@@ -1,6 +1,6 @@
 class "Echo"
 
-method main "([Ljava/lang/String;)V" [int] 32
+method main "([Ljava/lang/String;)V" "I" 32
 {
     iconst_0
     istore_1

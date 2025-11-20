@@ -313,9 +313,11 @@ typedef struct {
 } JcStackMapFrames;
 
 typedef enum {
-    JC_LOCAL_TYPE_INT,
+    JC_LOCAL_TYPE_INT    = 1,
+    JC_LOCAL_TYPE_FLOAT  = 2,
+    JC_LOCAL_TYPE_DOUBLE = 3,
+    JC_LOCAL_TYPE_LONG   = 4,
     JC_LOCAL_TYPE_OBJECT,
-    // TODO: Implement remaining
 } JcLocalDefType;
 
 typedef struct {
