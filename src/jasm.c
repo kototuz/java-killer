@@ -9,6 +9,8 @@
 #define LOC_Fmt      "%d:%d"
 #define LOC_Arg(loc) (loc).line_number, (loc).line_offset+1
 
+#define DEFAULT_MAX_STACK_SIZE 32
+
 typedef struct {
     JcLocalDef *items;
     uint16_t count;
@@ -804,32 +806,35 @@ int main(int argc, char **argv)
 
         uint16_t param_count = local_defs.count;
 
-        stb_c_lexer_get_token(&lexer);
-        switch (lexer.token) {
-        case CLEX_dqstring:
-            // Parse optional local variable definitions
-            if (!parse_field_descriptors(&lexer, lexer_token_sv(lexer), &local_defs)) return 1;
-            if (!lexer_expect_token(&lexer, CLEX_intlit)) return 1;
-        case CLEX_intlit:
-            // Parse max stack size
-            if (!(0 <= lexer.int_number && lexer.int_number <= UINT16_MAX)) {
-                stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
-                fprintf(stderr, "ERROR:"LOC_Fmt": Stack size must be u16\n", LOC_Arg(loc));
+        uint16_t max_stack_size = DEFAULT_MAX_STACK_SIZE;
+        for (;;) {
+            stb_c_lexer_get_token(&lexer);
+            if (lexer.token == CLEX_dqstring) {
+                // Parse optional local variable definitions
+                if (!parse_field_descriptors(&lexer, lexer_token_sv(lexer), &local_defs)) return 1;
+            } else if (lexer.token == CLEX_intlit) {
+                // Parse optional max stack size
+                if (!(0 <= lexer.int_number && lexer.int_number <= UINT16_MAX)) {
+                    stb_c_lexer_get_location(&lexer, lexer.where_firstchar, &loc);
+                    fprintf(stderr, "ERROR:"LOC_Fmt": Stack size must be u16\n", LOC_Arg(loc));
+                    return 1;
+                }
+
+                max_stack_size = lexer.int_number;
+            } else if (lexer.token == '{') {
+                // Code block starts
+                break;
+            } else {
+                report_unexpected_token(lexer);
                 return 1;
             }
-            break;
-
-        default:
-            report_unexpected_token(lexer);
-            return 1;
         }
 
         JcMethod *method = jc_method_new(&jc, name, descriptor, local_defs.items, local_defs.count, param_count);
-        method->max_stack = lexer.int_number;
+        method->max_stack = max_stack_size;
         method->access_flags = JC_ACCESS_FLAG_PUBLIC | JC_ACCESS_FLAG_STATIC;
 
         // Parse code
-        if (!lexer_expect_token(&lexer, '{')) return 1;
         for (;;) {
             stb_c_lexer_get_token(&lexer);
             if (lexer.token == '}') {
@@ -891,5 +896,3 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-// TODO: Maybe default stack size?

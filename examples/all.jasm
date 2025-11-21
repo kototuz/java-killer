@@ -1,7 +1,7 @@
 class "All"
 
-// method <name> <descriptor> <locals> <max-stack>
-method main "([Ljava/lang/String;)V" "I" 32
+// method <name> <descriptor> [<locals> <max-stack>]
+method main "([Ljava/lang/String;)V" "I"
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     aload 0
@@ -83,7 +83,7 @@ method say "(Ljava/lang/String;)V" 32
     return
 }
 
-method foo "()V" 32
+method foo "()V"
 {
     getstatic "java/lang/System.out:Ljava/io/PrintStream;"
     sipush 6969
