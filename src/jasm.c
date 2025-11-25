@@ -349,6 +349,7 @@ String_View lexer_token_sv(stb_lexer lexer)
 {
     switch (lexer.token) {
     case CLEX_id:       return sv_from_parts(lexer.parse_point - lexer.string_len, lexer.string_len);
+    // TODO: Handle escape sequences
     case CLEX_dqstring: return sv_from_parts(lexer.parse_point - lexer.string_len - 1, lexer.string_len);
     default:
         UNREACHABLE("lexer_token_sv");
@@ -746,11 +747,7 @@ bool create_class_dirs(String_View class_name, const char *output_dir)
         if (class_name.data[-1] != '/') break;
         dir.count = class_name.data - dir.data;
         char *full_path = temp_sprintf("%s/"SV_Fmt, output_dir, SV_Arg(dir));
-        int err = mkdir(full_path, 0755);
-        if (err < 0 && errno != EEXIST) {
-            fprintf(stderr, "ERROR: Could not create directory '%s': %s\n", full_path, strerror(errno));
-            return false;
-        }
+        if (!mkdir_if_not_exists(full_path)) return false;
     }
 
     return true;
@@ -758,6 +755,8 @@ bool create_class_dirs(String_View class_name, const char *output_dir)
 
 int main(int argc, char **argv)
 {
+    minimal_log_level = ERROR;
+
     char *program_name = shift_args(&argc, &argv);
 
     const char *input_path;
@@ -890,6 +889,7 @@ int main(int argc, char **argv)
         }
     }
 
+    if (!mkdir_if_not_exists(output_dir)) return 1;
     if (!create_class_dirs(class_name, output_dir)) return 1;
     char *output_file_path = temp_sprintf("%s/"SV_Fmt".class", output_dir, SV_Arg(class_name));
     jc_serialize(jc, output_file_path);

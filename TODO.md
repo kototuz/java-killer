@@ -37,8 +37,11 @@
 
 - [ ] `jasm:` Update format for instruction operands (e.g "MyClass.field:I" -> MyClass field I)
 
-- [ ] Try to find some simple frontend for the language because i don't want implement it myself.
-      I am building only a backend, building a frontend is also a difficult problem.
+
+
+- [ ] Try to do something with `bang` language. I think it is a good candidate
+
+
 
 
 - [ ] Implement `max_stack` and `max_locals` calculating
