@@ -348,9 +348,8 @@ bool lexer_expect_keyword(stb_lexer *lexer, const char *keyword)
 String_View lexer_token_sv(stb_lexer lexer)
 {
     switch (lexer.token) {
-    case CLEX_id:       return sv_from_parts(lexer.parse_point - lexer.string_len, lexer.string_len);
-    // TODO: Handle escape sequences
-    case CLEX_dqstring: return sv_from_parts(lexer.parse_point - lexer.string_len - 1, lexer.string_len);
+    case CLEX_id:       return sv_from_parts(lexer.where_firstchar, lexer.where_lastchar - lexer.where_firstchar + 1);
+    case CLEX_dqstring: return sv_from_parts(lexer.where_firstchar + 1, lexer.where_lastchar - lexer.where_firstchar - 1);
     default:
         UNREACHABLE("lexer_token_sv");
     }
@@ -544,6 +543,17 @@ bool find_label(JmpLabels jmp_labels, String_View label_name, JmpLabel *result)
     return false;
 }
 
+// Pushes current 'dqstring' to 'JcClass' as a string constant
+uint16_t lexer_push_curr_string(stb_lexer *lexer, JcClass *jc)
+{
+    assert(lexer->token == CLEX_dqstring);
+    // @leak, but constants must live throughout the entire program
+    // so we don't care
+    char *string = malloc(lexer->string_len);
+    memcpy(string, lexer->string, lexer->string_len);
+    return jc_cp_push_string(jc, sv_from_parts(string, lexer->string_len));
+}
+
 bool parse_and_compile_inst(
         stb_lexer *lexer,
         String_View opcode,
@@ -660,7 +670,7 @@ bool parse_and_compile_inst(
 
                         operand.as_u8 = jc_cp_push_float(jc, lexer->real_number);
                     } else if (lexer->token == CLEX_dqstring) {
-                        operand.as_u8 = jc_cp_push_string(jc, lexer_token_sv(*lexer));
+                        operand.as_u8 = lexer_push_curr_string(lexer, jc);
                     } else {
                         report_unexpected_token(*lexer);
                         return false;
@@ -687,7 +697,7 @@ bool parse_and_compile_inst(
 
                         operand.as_u16 = jc_cp_push_float(jc, lexer->real_number);
                     } else if (lexer->token == CLEX_dqstring) {
-                        operand.as_u16 = jc_cp_push_string(jc, lexer_token_sv(*lexer));
+                        operand.as_u16 = lexer_push_curr_string(lexer, jc);
                     } else {
                         report_unexpected_token(*lexer);
                         return false;
