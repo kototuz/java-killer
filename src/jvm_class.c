@@ -251,6 +251,7 @@ uint16_t jc_cp_push_ref(
         }
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
 
     jc->constant_pool.strange_count += 1;
@@ -267,6 +268,7 @@ uint16_t jc_cp_push_name_and_type(JcClass *jc, String_View name, String_View des
         }
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -281,6 +283,7 @@ uint16_t jc_cp_push_class(JcClass *jc, String_View class_name)
         }
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -296,6 +299,7 @@ uint16_t jc_cp_push_utf8(JcClass *jc, String_View bytes)
         }
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -308,6 +312,7 @@ uint16_t jc_cp_push_string(JcClass *jc, String_View bytes)
         .as_string.string_index = jc_cp_push_utf8(jc, bytes)
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -320,6 +325,7 @@ uint16_t jc_cp_push_integer(JcClass *jc, int32_t n)
         .as_u32 = n,
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -329,6 +335,7 @@ uint16_t jc_cp_push_float(JcClass *jc, float n)
 {
     JcConstant c = { .tag = JC_CONSTANT_TAG_FLOAT };
     memcpy(&c.as_u32, &n, sizeof(float));
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 1;
     return jc->constant_pool.strange_count;
@@ -341,6 +348,7 @@ uint16_t jc_cp_push_long(JcClass *jc, int64_t n)
         .as_u64 = n,
     };
 
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 2;
     return jc->constant_pool.strange_count - 1;
@@ -350,6 +358,7 @@ uint16_t jc_cp_push_double(JcClass *jc, double n)
 {
     JcConstant c = { .tag = JC_CONSTANT_TAG_DOUBLE };
     memcpy(&c.as_u64, &n, sizeof(double));
+    assert(jc->constant_pool.count < UINT16_MAX);
     da_append(&jc->constant_pool, c);
     jc->constant_pool.strange_count += 2;
     return jc->constant_pool.strange_count - 1;

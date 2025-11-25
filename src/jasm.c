@@ -653,6 +653,7 @@ bool parse_and_compile_inst(
                 case OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U8: {
                     stb_c_lexer_get_token(lexer);
                     operand.tag = JC_INST_OPERAND_TAG_U8;
+                    uint16_t index;
                     if (lexer->token == CLEX_intlit) {
                         if (!(INT32_MIN <= lexer->int_number && lexer->int_number <= INT32_MAX)) {
                             stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
@@ -660,7 +661,7 @@ bool parse_and_compile_inst(
                             return false;
                         }
 
-                        operand.as_u8 = jc_cp_push_integer(jc, lexer->int_number);
+                        index = jc_cp_push_integer(jc, lexer->int_number);
                     } else if (lexer->token == CLEX_floatlit) {
                         if (!(FLT_MIN <= lexer->real_number && lexer->real_number <= FLT_MAX)) {
                             stb_c_lexer_get_location(lexer, lexer->where_firstchar, &loc);
@@ -668,13 +669,16 @@ bool parse_and_compile_inst(
                             return false;
                         }
 
-                        operand.as_u8 = jc_cp_push_float(jc, lexer->real_number);
+                        index = jc_cp_push_float(jc, lexer->real_number);
                     } else if (lexer->token == CLEX_dqstring) {
-                        operand.as_u8 = lexer_push_curr_string(lexer, jc);
+                        index = lexer_push_curr_string(lexer, jc);
                     } else {
                         report_unexpected_token(*lexer);
                         return false;
                     }
+
+                    assert(index < UINT8_MAX);
+                    operand.as_u8 = index;
                 } break;
 
                 case OPERAND_TYPE_CONSTANT_INT_FLOAT_STRING_U16: {
