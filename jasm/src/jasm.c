@@ -430,7 +430,7 @@ bool lexer_expect_method_descriptor(stb_lexer *lexer, LocalDefs *result)
     if (!lexer_expect_token(lexer, CLEX_dqstring)) return false;
 
     String_View descriptor = lexer_token_sv(*lexer);
-    if (!sv_starts_with(descriptor, SV_STATIC("("))) {
+    if (!sv_starts_with(descriptor, SV("("))) {
         stb_c_lexer_get_location(lexer, descriptor.data, &loc);
         fprintf(stderr, "ERROR:"LOC_Fmt": Method descriptor parameters must start with '('\n", LOC_Arg(loc));
         return false;

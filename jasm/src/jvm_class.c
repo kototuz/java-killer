@@ -15,13 +15,13 @@ JcClass jc_new(String_View class_name)
     JcClass c = {0};
 
     // Push attribute names now to reuse it later
-    jc_cp_push_utf8(&c, SV_STATIC("Code"));
-    jc_cp_push_utf8(&c, SV_STATIC("StackMapTable"));
+    jc_cp_push_utf8(&c, SV("Code"));
+    jc_cp_push_utf8(&c, SV("StackMapTable"));
 
     c.this_class = jc_cp_push_class(&c, class_name);
 
     // Default parameters for convenience
-    c.super_class = jc_cp_push_class(&c, SV_STATIC("java/lang/Object"));
+    c.super_class = jc_cp_push_class(&c, SV("java/lang/Object"));
     c.minor_version = 0;
     c.major_version = 64;
     c.access_flags = JC_ACCESS_FLAG_SUPER;
@@ -146,6 +146,15 @@ JcMethod *jc_method_new(
 
     da_append(&c->methods, m);
     return &c->methods.items[c->methods.count-1];
+}
+
+JcMethod *jc_method_new2(JcClass *jc, String_View name, String_View descriptor)
+{
+    JcMethod m = {0};
+    m.name_index = jc_cp_push_utf8(jc, name);
+    m.descriptor_index = jc_cp_push_utf8(jc, descriptor);
+    da_append(&jc->methods, m);
+    return &jc->methods.items[jc->methods.count-1];
 }
 
 void jc_method_push_inst_(JcMethod *m, JcInstOpcode opcode, JcInstOperand *operands, size_t operand_count)

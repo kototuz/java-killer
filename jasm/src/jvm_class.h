@@ -7,8 +7,6 @@
 #define NOB_STRIP_PREFIX
 #include <nob.h>
 
-#define SV_STATIC(lit) ((String_View){ sizeof(lit) - 1, (lit) })
-
 typedef enum {
     JC_CONSTANT_TAG_CLASS                = 7,
     JC_CONSTANT_TAG_FIELD_REF            = 9,
@@ -448,6 +446,9 @@ typedef struct {
 JcClass  jc_new(String_View class_name);
 
 JcMethod *jc_method_new(JcClass *jc, String_View name, String_View descriptor, JcLocalDef *local_defs, uint16_t local_def_count, uint16_t arg_count);
+
+// NOTE: Gives more control than the previous
+JcMethod *jc_method_new2(JcClass *jc, String_View name, String_View descriptor);
 
 #define JC_OPERAND_U8(n)  ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U8,  .as_u8  = (n) })
 #define JC_OPERAND_U16(n) ((JcInstOperand){ .tag = JC_INST_OPERAND_TAG_U16, .as_u16 = (n) })

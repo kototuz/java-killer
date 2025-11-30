@@ -659,6 +659,18 @@ NOBDEF void nob__go_rebuild_urself(int argc, char **argv, const char *source_pat
 // }
 #define NOB_GO_REBUILD_URSELF_PLUS(argc, argv, ...) nob__go_rebuild_urself(argc, argv, __FILE__, __VA_ARGS__, NULL);
 
+#define SV(cstr_lit) \
+    ((String_View) { \
+        .count = sizeof(cstr_lit) - 1, \
+        .data = (cstr_lit) \
+    })
+
+#define SV_STATIC(cstr_lit) \
+    { \
+        .count = sizeof(cstr_lit) - 1, \
+        .data = (cstr_lit) \
+    }
+
 typedef struct {
     size_t count;
     const char *data;
@@ -668,6 +680,7 @@ NOBDEF const char *nob_temp_sv_to_cstr(Nob_String_View sv);
 
 NOBDEF Nob_String_View nob_sv_chop_by_delim(Nob_String_View *sv, char delim);
 NOBDEF Nob_String_View nob_sv_chop_left(Nob_String_View *sv, size_t n);
+NOBDEF Nob_String_View sv_chop_right(Nob_String_View *sv, size_t n);
 NOBDEF Nob_String_View nob_sv_trim(Nob_String_View sv);
 NOBDEF Nob_String_View nob_sv_trim_left(Nob_String_View sv);
 NOBDEF Nob_String_View nob_sv_trim_right(Nob_String_View sv);
@@ -1961,6 +1974,19 @@ NOBDEF Nob_String_View nob_sv_chop_left(Nob_String_View *sv, size_t n)
     Nob_String_View result = nob_sv_from_parts(sv->data, n);
 
     sv->data  += n;
+    sv->count -= n;
+
+    return result;
+}
+
+NOBDEF Nob_String_View sv_chop_right(Nob_String_View *sv, size_t n)
+{
+    if (n > sv->count) {
+        n = sv->count;
+    }
+
+    Nob_String_View result = nob_sv_from_parts(sv->data + sv->count - n, n);
+
     sv->count -= n;
 
     return result;

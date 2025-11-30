@@ -1,0 +1,7 @@
+proc main() {
+    var a: i32 = 404;
+    var b: i32 = a*2 * (a+5);
+}
+
+proc foo() {
+}

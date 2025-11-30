@@ -1,3 +1,5 @@
+# Jasm
+
 - [x] Push constants to the `ClassFile` struct
 
 - [x] Push methods but only with `Code` attribute because i don't give a shit about everithing else
@@ -39,15 +41,20 @@
 
 
 
-- [ ] Try to do something with `bang` language. I think it is a good candidate
+# Jlang
 
+- [x] Try to do something with `bang` language. I think it is a good candidate
 
+- [ ] Booleans and unary expressions
 
+- [ ] If, while, for statements
 
-- [ ] Implement `max_stack` and `max_locals` calculating
+- [ ] Break, return
 
+- [ ] Function parameters
 
+- [ ] Function return value
 
-`TODO:` Think about implementing stack-based language something like tsoding's `porth`.
-Anyway we will implement backand for language first. So we can try to implement different type of
-languages
+- [ ] Full set binary of binary operations (/, %)
+
+- [ ] Structures

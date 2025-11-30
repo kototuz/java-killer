@@ -1,8 +1,6 @@
-#include <stdio.h>
-
 #define NOB_IMPLEMENTATION
 #define NOB_STRIP_PREFIX
-#include "thirdparty/nob.h"
+#include "../thirdparty/nob.h"
 
 int main(int argc, char **argv)
 {
@@ -12,7 +10,7 @@ int main(int argc, char **argv)
     if (!mkdir_if_not_exists("build/examples/")) return 1;
 
     Cmd cmd = {0};
-    cmd_append(&cmd, "gcc", "-Wall",  "-Wextra", "-Wno-implicit-fallthrough", "-Ithirdparty", "-o", "build/jasm", "src/jasm.c", "src/jvm_class.c");
+    cmd_append(&cmd, "gcc", "-Wall",  "-Wextra", "-Wno-implicit-fallthrough", "-I../thirdparty", "-o", "build/jasm", "src/jasm.c", "src/jvm_class.c");
     if (!cmd_run(&cmd)) return 1;
 
     File_Paths examples = {0};
